@@ -4,14 +4,12 @@
 
 Skeleton app built with stack of
 
-<code>
+```
+Supabase ⚡,
 
-<b>S</b> <i>upabase</i> <b>⚡</b>,
+Tailwind CSS 💨,
 
-<b>T</b> <i>ailwind CSS</i> <b>💨</b>,
+React ⚛,
 
-<b>R</b> <i>eact</i> <b>⚛</b>,
-
-<b>N</b> <i>ext.js</i> <b>▲</b>.
-
-</code>
+Next.js ▲.
+```
