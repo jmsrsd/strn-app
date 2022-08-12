@@ -4,10 +4,12 @@
 
 Skeleton app built with stack of
 
-<code><b>S</b> <i>upabase</i> <b>⚡</b>,
+<code>
+<b>S</b> <i>upabase</i> <b>⚡</b>,
 
 <b>T</b> <i>ailwind CSS</i> <b>💨</b>,
 
 <b>R</b> <i>eact</i> <b>⚛</b>,
 
-<b>N</b> <i>ext.js</i> <b>▲</b>.</code>
+<b>N</b> <i>ext.js</i> <b>▲</b>.
+</code>
