@@ -3,7 +3,7 @@ import {
     supabaseServerClient
   } from '@supabase/auth-helpers-nextjs';
   
-  export default withApiAuth(async function ProtectedRoute(req, res) {
+  export default withApiAuth(async (req, res) => {
     // Run queries with RLS on the server
     const { data } = await supabaseServerClient({ req, res })
       .from('json')
