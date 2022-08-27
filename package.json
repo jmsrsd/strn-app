@@ -6,17 +6,21 @@
     "start": "next start"
   },
   "dependencies": {
+    "@prisma/client": "^4.2.1",
     "@supabase/auth-helpers-nextjs": "^0.2.7",
     "@supabase/auth-helpers-react": "^0.2.3",
     "@supabase/supabase-js": "^1.35.6",
     "@supabase/ui": "^0.36.5",
     "@tanstack/react-query": "^4.1.0",
+    "cookie": "^0.5.0",
     "next": "latest",
     "react": "18.1.0",
+    "react-cookie": "^4.1.1",
     "react-dom": "18.1.0",
     "react-icons": "^4.4.0"
   },
   "devDependencies": {
+    "@types/cookie": "^0.5.1",
     "@types/node": "17.0.35",
     "@types/react": "18.0.9",
     "@types/react-dom": "18.0.5",
