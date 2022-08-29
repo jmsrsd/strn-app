@@ -1,18 +1,31 @@
+import { withApiAuth } from "@supabase/auth-helpers-nextjs";
 import * as trpcNext from "@trpc/server/adapters/next";
-import { NextApiRequest, NextApiResponse } from "next";
-import { createContextWithApiAuth } from "~/server/createContext";
-import { appRouter } from "../../../server/route/app.router";
+import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
+import { CreateContext, withUserCreateContext } from "~/server/createContext";
+import { appRouter } from "~/server/route/app.router";
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
-  await trpcNext.createNextApiHandler({
-    router: appRouter,
-    createContext: await createContextWithApiAuth(req, res),
-    onError({ error }) {
-      if (error.code === "INTERNAL_SERVER_ERROR") {
-        console.error("Something went wrong", error);
-      } else {
-        console.error(error);
-      }
-    },
-  })(req, res);
+const withUser = (
+  createNextApiHandler: (createContext: CreateContext) => NextApiHandler<any>
+) => {
+  return async (req: NextApiRequest, res: NextApiResponse) => {
+    const createContext = await withUserCreateContext({ req, res });
+    const nextApiHandler = createNextApiHandler(createContext);
+    await nextApiHandler(req, res);
+  };
 };
+
+export default withApiAuth(
+  withUser((createContext: CreateContext) => {
+    return trpcNext.createNextApiHandler({
+      router: appRouter,
+      createContext,
+      onError({ error }) {
+        if (error.code === "INTERNAL_SERVER_ERROR") {
+          console.error("Something went wrong", error);
+        } else {
+          console.error(error);
+        }
+      },
+    });
+  })
+);

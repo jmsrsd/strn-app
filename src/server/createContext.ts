@@ -1,24 +1,14 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import {
-  supabaseServerClient,
-  withApiAuth,
-} from "@supabase/auth-helpers-nextjs";
-import { SupabaseAuthClient } from "@supabase/supabase-js/dist/module/lib/SupabaseAuthClient";
+import { supabaseServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "~/utils/prisma";
-import waitFor from "~/utils/waitFor";
 
-interface ContextUser {
+export interface CtxUser {
   id: string;
   email: string;
 }
 
-type CreateContextProps = {
-  req: NextApiRequest;
-  res: NextApiResponse;
-};
-
-type CreateContext = ({ req, res }: CreateContextProps) => {
+export type Context = {
   req: NextApiRequest;
   res: NextApiResponse<any>;
   prisma: PrismaClient<
@@ -26,38 +16,31 @@ type CreateContext = ({ req, res }: CreateContextProps) => {
     never,
     Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
   >;
-  user: ContextUser;
+  user?: CtxUser;
 };
 
-async function authenticate(
-  req: NextApiRequest,
-  res: NextApiResponse
-): Promise<ContextUser> {
-  let auth: SupabaseAuthClient | null | undefined;
-  let isAuthenticating = true;
+export type CreateContextProps = {
+  req: NextApiRequest;
+  res: NextApiResponse;
+};
 
-  await withApiAuth(async (req, res) => {
-    auth = supabaseServerClient({ req, res }).auth;
-    isAuthenticating = false;
-  })(req, res);
+export type CreateContext = ({ req, res }: CreateContextProps) => Context;
 
-  while (isAuthenticating) await waitFor(0);
+export async function withUserCreateContext({ req, res }: CreateContextProps) {
+  const supabase = supabaseServerClient({ req, res });
+  const authentication = await supabase.auth.api.getUserByCookie(req, res);
+  const authenticated = authentication.user;
+  const user: CtxUser | undefined =
+    !!authenticated?.id && !!authenticated?.email
+      ? {
+          id: authenticated?.id,
+          email: authenticated?.email,
+        }
+      : undefined;
 
-  const user = auth?.user();
-  return {
-    id: `${user?.id}`,
-    email: `${user?.email}`,
-  };
-}
-
-export async function createContextWithApiAuth(
-  req: NextApiRequest,
-  res: NextApiResponse
-): Promise<CreateContext> {
-  const user = await authenticate(req, res);
-  return ({ req, res }) => {
+  const result: CreateContext = ({ req, res }) => {
     return { req, res, prisma, user };
   };
-}
 
-export type Context = ReturnType<CreateContext>;
+  return result;
+}
