@@ -1,5 +1,6 @@
 import {
-  supabaseServerClient, withApiAuth
+  supabaseServerClient,
+  withApiAuth,
 } from "@supabase/auth-helpers-nextjs";
 
 export default withApiAuth(async (req, res) => {

@@ -10,6 +10,7 @@ datasource db {
 }
 
 model json {
-  key   String @id @default(cuid())
+  key   String  @id @default(cuid())
+  type  String?
   value Json?
 }

@@ -1,9 +1,19 @@
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
-
-export default prisma;
-
-export function makeSerializable(value: any) {
-  return JSON.parse(JSON.stringify(value));
+declare global {
+  var prisma: PrismaClient | undefined;
 }
+
+export const prisma = global.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  global.prisma = prisma;
+}
+
+export const prismaHelper = {
+  serialize: (value: any) => {
+    const stringified = JSON.stringify(value);
+    const parsed = JSON.parse(stringified);
+    return parsed;
+  },
+};
