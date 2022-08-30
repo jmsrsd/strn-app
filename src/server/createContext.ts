@@ -2,11 +2,7 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { supabaseServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "~/utils/prisma";
-
-export interface CtxUser {
-  id: string;
-  email: string;
-}
+import { User } from "~/utils/withUser";
 
 export type Context = {
   req: NextApiRequest;
@@ -16,7 +12,7 @@ export type Context = {
     never,
     Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
   >;
-  user?: CtxUser;
+  user?: User;
 };
 
 export type CreateContextProps = {
@@ -26,11 +22,11 @@ export type CreateContextProps = {
 
 export type CreateContext = ({ req, res }: CreateContextProps) => Context;
 
-export async function withUserCreateContext({ req, res }: CreateContextProps) {
+export async function makeCreateContext({ req, res }: CreateContextProps) {
   const supabase = supabaseServerClient({ req, res });
   const authentication = await supabase.auth.api.getUserByCookie(req, res);
   const authenticated = authentication.user;
-  const user: CtxUser | undefined =
+  const user: User | undefined =
     !!authenticated?.id && !!authenticated?.email
       ? {
           id: authenticated?.id,

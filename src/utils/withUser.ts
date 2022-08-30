@@ -3,9 +3,13 @@ import {
   withPageAuth,
 } from "@supabase/auth-helpers-nextjs";
 
-type User = {
+export type User = {
   id: string;
   email: string;
+};
+
+export type WithUserProps = {
+  user: SupabaseUser;
 };
 
 export const getServerSideUser = withPageAuth({
@@ -13,7 +17,7 @@ export const getServerSideUser = withPageAuth({
 });
 
 export const withUser = (fn: (user: User) => JSX.Element) => {
-  return ({ user }: { user: SupabaseUser }) => {
+  return ({ user }: WithUserProps) => {
     return fn({
       id: user.id,
       email: user.email!,
