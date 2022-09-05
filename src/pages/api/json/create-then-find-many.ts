@@ -1,8 +1,8 @@
 import { withApiAuth } from "@supabase/auth-helpers-nextjs";
-import { prisma, prismaHelper } from "~/utils/prisma";
+import { prisma, serialize } from "~/utils/prisma";
 
 export default withApiAuth(async (req, res) => {
-  await prisma.json.create({
+  await prisma.data.create({
     data: {
       value: {
         createdAt: +Date.now(),
@@ -10,9 +10,7 @@ export default withApiAuth(async (req, res) => {
     },
   });
 
-  const data = await prisma.json
-    .findMany()
-    .then((data) => prismaHelper.serialize(data));
+  const data = await prisma.data.findMany().then(serialize);
 
   res.json(data);
 });

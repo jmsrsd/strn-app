@@ -1,20 +1,23 @@
 import { trpc } from "~/utils/trpc";
-import { getServerSideUser, withUser } from "~/utils/withUser";
+import { strict } from "~/utils/user";
 
-export const getServerSideProps = getServerSideUser;
+export const getServerSideProps = strict.getServerSideUser;
 
-export default withUser((user) => {
-  const query = trpc.useQuery(["json.test"]);
-  const mutation = trpc.useMutation(["json.clear"]);
+export default strict.withUser((user) => {
+  const query = trpc.useQuery(["data.test"]);
+  const mutation = trpc.useMutation(["data.clear"], {
+    onSuccess: async (input) => {
+      await query.refetch();
+    },
+  });
 
   if (query.isLoading || mutation.isLoading) return <pre>Loading...</pre>;
 
   return (
     <>
       <button
-        onClick={async () => {
-          await mutation.mutateAsync();
-          await query.refetch();
+        onClick={() => {
+          mutation.mutate();
         }}
       >
         CLEAR ALL

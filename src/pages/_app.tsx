@@ -7,7 +7,7 @@ import "../styles/globals.css";
 
 const queryClient = new QueryClient();
 
-export default withTRPC(({ Component, pageProps }: AppProps) => {
+const MyApp = withTRPC(({ Component, pageProps }: AppProps) => {
   return (
     <UserProvider supabaseClient={supabaseClient}>
       <QueryClientProvider client={queryClient}>
@@ -15,4 +15,6 @@ export default withTRPC(({ Component, pageProps }: AppProps) => {
       </QueryClientProvider>
     </UserProvider>
   );
-});
+})
+
+export default MyApp;

@@ -9,8 +9,27 @@ datasource db {
   referentialIntegrity = "prisma"
 }
 
-model json {
-  key   String  @id @default(cuid())
+model data {
+  id    String  @id @default(cuid())
   type  String?
   value Json?
+}
+
+model strnData {
+  id           String  @id @default(cuid())
+  collectionId String?
+  documentId   String?
+  key          String?
+  type         String?
+  value        String?
+}
+
+model strnDocument {
+  id  String  @id @default(cuid())
+  key String?
+}
+
+model strnCollection {
+  id  String  @id @default(cuid())
+  key String?
 }

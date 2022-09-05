@@ -10,10 +10,8 @@ if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
 
-export const prismaHelper = {
-  serialize: (value: any) => {
-    const stringified = JSON.stringify(value);
-    const parsed = JSON.parse(stringified);
-    return parsed;
-  },
+export const serialize = (value: any) => {
+  const stringified = JSON.stringify(value);
+  const parsed = JSON.parse(stringified);
+  return parsed;
 };

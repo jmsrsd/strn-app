@@ -1,5 +1,3 @@
-export default async function waitFor(ms: number) {
-  await new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+export async function waitFor(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }
