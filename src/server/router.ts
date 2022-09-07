@@ -17,7 +17,7 @@ export type ProcedureResolver<TInput, TOutput> = (
   opts: ProcedureResolverProps<TInput>
 ) => Promise<TOutput> | TOutput;
 
-export function withRouterAuth<TInput, TOutput>(
+export function withRouteAuth<TInput, TOutput>(
   resolve: ProcedureResolver<TInput, InferLast<TOutput>>
 ) {
   return async (props: ProcedureResolverProps<TInput>) => {

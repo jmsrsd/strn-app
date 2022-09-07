@@ -1,4 +1,4 @@
-import { Context } from "~/server/utils/context";
+import { Context } from "./context";
 import { serialize } from "~/utils/prisma";
 
 export function withMetaData(props: { ctx: Context; input?: any }) {
@@ -29,7 +29,7 @@ export type Data = {
 };
 
 export async function getCollections(ctx: Context) {
-  const collections = await ctx.prisma.data.findMany({
+  const collections = await ctx.prisma.data_.findMany({
     where: {
       type: "collection",
     },
@@ -50,7 +50,7 @@ export async function getDocuments(ctx: Context, collection: string) {
   const collected = await getCollections(ctx);
   if (collected.length < 1) return result;
   const { id, key } = collected[0];
-  const documents = await ctx.prisma.data.findMany({
+  const documents = await ctx.prisma.data_.findMany({
     where: {
       type: "document",
       value: {

@@ -9,27 +9,54 @@ datasource db {
   referentialIntegrity = "prisma"
 }
 
-model data {
+model data_ {
   id    String  @id @default(cuid())
   type  String?
   value Json?
 }
 
-model strnData {
-  id           String  @id @default(cuid())
-  collectionId String?
-  documentId   String?
-  key          String?
-  type         String?
-  value        String?
+model strn__application {
+  id  String @id @default(cuid()) @db.VarChar(63)
+  key String @db.VarChar(255)
 }
 
-model strnDocument {
-  id  String  @id @default(cuid())
-  key String?
+model strn__domain {
+  id            String @id @default(cuid()) @db.VarChar(63)
+  applicationId String @db.VarChar(63)
+  key           String @db.VarChar(255)
 }
 
-model strnCollection {
-  id  String  @id @default(cuid())
-  key String?
+model strn__entity {
+  id       String @id @default(cuid()) @db.VarChar(63)
+  domainId String @db.VarChar(63)
+}
+
+model strn__attribute {
+  id       String @id @default(cuid()) @db.VarChar(63)
+  entityId String @db.VarChar(63)
+  key      String @db.VarChar(255)
+}
+
+model strn__text_field {
+  id          String @id @default(cuid()) @db.VarChar(63)
+  attributeId String @db.VarChar(63)
+  text        String @db.VarChar(255)
+}
+
+model strn__text_block {
+  id          String @id @default(cuid()) @db.VarChar(63)
+  attributeId String @db.VarChar(63)
+  text        String @db.VarChar(4095)
+}
+
+model strn__text_document {
+  id          String @id @default(cuid()) @db.VarChar(63)
+  attributeId String @db.VarChar(63)
+  text        String @db.Text
+}
+
+model strn__file_upload {
+  id          String @id @default(cuid()) @db.VarChar(63)
+  attributeId String @db.VarChar(63)
+  file        Bytes  @db.MediumBlob
 }

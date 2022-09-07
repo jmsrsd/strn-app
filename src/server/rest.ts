@@ -25,12 +25,12 @@ function withMetaData(props: { ctx: Context; input: Input }) {
 export async function get(props: { ctx: Context; input: { id: string } }) {
   const { ctx, input } = props;
   const id = input.id;
-  return await ctx.prisma.data.findMany({ where: { id } });
+  return await ctx.prisma.data_.findMany({ where: { id } });
 }
 
 export async function post(props: { ctx: Context; input: Input }) {
   const { value } = withMetaData(props);
-  return await props.ctx.prisma.data.create({
+  return await props.ctx.prisma.data_.create({
     data: {
       value,
     },
@@ -41,14 +41,14 @@ export async function put(props: {
   ctx: Context;
   input: { id: string; value: any };
 }) {
-  return await props.ctx.prisma.data.update({
+  return await props.ctx.prisma.data_.update({
     where: { id: props.input.id },
     data: { value: withMetaData(props).value },
   });
 }
 
 async function delete_(props: { ctx: Context; input: { id: string } }) {
-  return await props.ctx.prisma.data.delete({
+  return await props.ctx.prisma.data_.delete({
     where: { id: props.input.id },
   });
 }

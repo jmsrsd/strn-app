@@ -1,32 +1,34 @@
 import { z } from "zod";
 import { getUserRole } from "~/utils/user";
 
-import * as rest from "../utils/rest";
-import { createRouter, withRouterAuth } from "../utils/router";
+import * as rest from "~/server/rest";
+import { createRouter, withRouteAuth } from "~/server/router";
+
+export const DataDocumentKey = "data";
 
 export const dataRouter = createRouter()
   .query("me", {
-    resolve: withRouterAuth(async ({ ctx }) => {
+    resolve: withRouteAuth(async ({ ctx }) => {
       const { req, res } = ctx;
       return await getUserRole({ req, res });
     }),
   })
   .query("browse", {
-    resolve: withRouterAuth(async ({ ctx }) => {
-      return await ctx.prisma.data.findMany();
+    resolve: withRouteAuth(async ({ ctx }) => {
+      return await ctx.prisma.data_.findMany();
     }),
   })
   .query("test", {
-    resolve: withRouterAuth(async ({ ctx }) => {
+    resolve: withRouteAuth(async ({ ctx }) => {
       await rest.post({ ctx, input: { value: {} } });
-      return await ctx.prisma.data.findMany();
+      return await ctx.prisma.data_.findMany();
     }),
   })
   .query("read", {
     input: z.object({
       id: z.string(),
     }),
-    resolve: withRouterAuth(async ({ ctx, input }) => {
+    resolve: withRouteAuth(async ({ ctx, input }) => {
       return await rest.get({ ctx, input });
     }),
   })
@@ -35,7 +37,7 @@ export const dataRouter = createRouter()
       id: z.string().nullish(),
       value: z.any(),
     }),
-    resolve: withRouterAuth(async ({ ctx, input }) => {
+    resolve: withRouteAuth(async ({ ctx, input }) => {
       const { id, value } = input;
       if (!!id) {
         return await rest.put({ ctx, input: { id, value } });
@@ -48,12 +50,13 @@ export const dataRouter = createRouter()
     input: z.object({
       id: z.string(),
     }),
-    resolve: withRouterAuth(async ({ ctx, input }) => {
+    resolve: withRouteAuth(async ({ ctx, input }) => {
       return await rest.delete({ ctx, input });
     }),
   })
   .mutation("clear", {
-    resolve: withRouterAuth(async ({ ctx }) => {
-      return await ctx.prisma.data.deleteMany();
+    input: z.void().or(z.null()).or(z.undefined()),
+    resolve: withRouteAuth(async ({ ctx }) => {
+      return await ctx.prisma.data_.deleteMany();
     }),
   });

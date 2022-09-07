@@ -2,7 +2,7 @@ import { withApiAuth } from "@supabase/auth-helpers-nextjs";
 import * as trpcNext from "@trpc/server/adapters/next";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { appRouter } from "~/server/route/app.router";
-import { CreateContext, getCreateContext } from "~/server/utils/context";
+import { CreateContext, getCreateContext } from "~/server/context";
 
 const withCreateContext = (
   createNextApiHandler: (createContext: CreateContext) => NextApiHandler<any>
