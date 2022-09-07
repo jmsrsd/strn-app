@@ -1,11 +1,11 @@
 import { createRouter } from "../router";
-import { DataDocumentKey, dataRouter } from "./data.router";
+import { dataKey, dataRouter } from "./data.router";
+import { domainKey, domainRouter } from "./domain.router";
 
-export const AppCollectionKey = "strn-blog-app";
+export const appKey = "strn-blog-app";
 
-export const appRouter = createRouter().merge(
-  `${DataDocumentKey}.`,
-  dataRouter
-);
+export const appRouter = createRouter()
+  .merge(`${dataKey}.`, dataRouter)
+  .merge(`${domainKey}.`, domainRouter);
 
 export type AppRouter = typeof appRouter;

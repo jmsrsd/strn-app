@@ -4,7 +4,7 @@ import { getUserRole } from "~/utils/user";
 import * as rest from "~/server/rest";
 import { createRouter, withRouteAuth } from "~/server/router";
 
-export const DataDocumentKey = "data";
+export const dataKey = "data";
 
 export const dataRouter = createRouter()
   .query("me", {

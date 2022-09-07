@@ -1,5 +1,5 @@
 import { httpBatchLink } from "@trpc/client/links/httpBatchLink";
-import { loggerLink } from "@trpc/client/links/loggerLink";
+// import { loggerLink } from "@trpc/client/links/loggerLink";
 import { withTRPC as withTRPCNext } from "@trpc/next";
 import { createReactQueryHooks } from "@trpc/react";
 import { NextComponentType } from "next";
@@ -24,7 +24,7 @@ export function withTRPC(
         },
         transformer: superjson,
         links: [
-          loggerLink(),
+          // loggerLink(),
           httpBatchLink({
             maxBatchSize: 10,
             url: urls.api.trpc,

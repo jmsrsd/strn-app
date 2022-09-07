@@ -16,8 +16,12 @@ export class TextField {
     return this.ctx.prisma.strn__text_field;
   }
 
+  private get attribute() {
+    return Attribute.of(this.ctx);
+  }
+
   async id(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     const id = await this.database
       .findFirst({
         select: {
@@ -43,7 +47,7 @@ export class TextField {
   }
 
   async get(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     return await this.database
       .findFirst({
         select: {
@@ -69,7 +73,7 @@ export class TextField {
   }
 
   async unset(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     await this.database.deleteMany({
       where: {
         attributeId,
@@ -93,8 +97,12 @@ export class TextBlock {
     return this.ctx.prisma.strn__text_block;
   }
 
+  private get attribute() {
+    return Attribute.of(this.ctx);
+  }
+
   async id(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     const id = await this.database
       .findFirst({
         select: {
@@ -120,7 +128,7 @@ export class TextBlock {
   }
 
   async get(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     return await this.database
       .findFirst({
         select: {
@@ -146,7 +154,7 @@ export class TextBlock {
   }
 
   async unset(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     await this.database.deleteMany({
       where: {
         attributeId,
@@ -170,8 +178,12 @@ export class TextDocument {
     return this.ctx.prisma.strn__text_document;
   }
 
+  private get attribute() {
+    return Attribute.of(this.ctx);
+  }
+
   async id(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     const id = await this.database
       .findFirst({
         select: {
@@ -197,7 +209,7 @@ export class TextDocument {
   }
 
   async get(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     return await this.database
       .findFirst({
         select: {
@@ -223,7 +235,7 @@ export class TextDocument {
   }
 
   async unset(entityId: string, attributeKey: string) {
-    const attributeId = await Attribute.of(this.ctx).id(entityId, attributeKey);
+    const attributeId = await this.attribute.id(entityId, attributeKey);
     await this.database.deleteMany({
       where: {
         attributeId,
