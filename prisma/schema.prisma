@@ -15,47 +15,35 @@ model data_ {
   value Json?
 }
 
-model strn__application {
+model strnApplication {
   id  String @id @default(cuid()) @db.VarChar(63)
   key String @db.VarChar(255)
 }
 
-model strn__domain {
+model strnDomain {
   id            String @id @default(cuid()) @db.VarChar(63)
   applicationId String @db.VarChar(63)
   key           String @db.VarChar(255)
 }
 
-model strn__entity {
+model strnEntity {
   id       String @id @default(cuid()) @db.VarChar(63)
   domainId String @db.VarChar(63)
 }
 
-model strn__attribute {
+model strnAttribute {
   id       String @id @default(cuid()) @db.VarChar(63)
   entityId String @db.VarChar(63)
   key      String @db.VarChar(255)
 }
 
-model strn__text_field {
-  id          String @id @default(cuid()) @db.VarChar(63)
-  attributeId String @db.VarChar(63)
-  text        String @db.VarChar(255)
-}
-
-model strn__text_block {
+model strnText {
   id          String @id @default(cuid()) @db.VarChar(63)
   attributeId String @db.VarChar(63)
   text        String @db.VarChar(4095)
 }
 
-model strn__text_document {
-  id          String @id @default(cuid()) @db.VarChar(63)
-  attributeId String @db.VarChar(63)
-  text        String @db.Text
-}
-
-model strn__file_upload {
+model strnFile {
   id          String @id @default(cuid()) @db.VarChar(63)
   attributeId String @db.VarChar(63)
   file        Bytes  @db.MediumBlob

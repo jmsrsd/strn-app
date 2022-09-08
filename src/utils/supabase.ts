@@ -1,11 +1,6 @@
 import { supabaseServerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
-import { NextApiRequest, NextApiResponse } from "next";
-
-export type NextApiMethods = {
-  req: NextApiRequest;
-  res: NextApiResponse;
-};
+import { NextApiHandlerProps } from "./next";
 
 export const service = () => {
   return createClient(
@@ -14,11 +9,12 @@ export const service = () => {
   );
 };
 
-export const client = (nextApiMethods: NextApiMethods) => {
-  return supabaseServerClient(nextApiMethods);
+export const client = (props: NextApiHandlerProps) => {
+  const { req, res } = props;
+  return supabaseServerClient({ req, res });
 };
 
-export const auth = (nextApiMethods: NextApiMethods) => {
-  const { req, res } = nextApiMethods;
-  return client(nextApiMethods).auth.api.getUserByCookie(req, res);
+export const auth = (props: NextApiHandlerProps) => {
+  const { req, res } = props;
+  return client({ req, res }).auth.api.getUserByCookie(req, res);
 };

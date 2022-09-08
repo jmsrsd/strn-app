@@ -1,4 +1,5 @@
 import { Context } from "../context";
+import { Text } from "./text";
 
 export class Attribute {
   private ctx: Context;
@@ -12,7 +13,7 @@ export class Attribute {
   }
 
   private get database() {
-    return this.ctx.prisma.strn__attribute;
+    return this.ctx.prisma.strnAttribute;
   }
 
   async id(entityId: string, key: string) {
@@ -41,7 +42,21 @@ export class Attribute {
       .then((attribute) => attribute.id);
   }
 
+  async keys(entityId: string) {
+    return await this.database
+      .findMany({
+        select: {
+          key: true,
+        },
+        where: {
+          entityId,
+        },
+      })
+      .then((attributes) => attributes.map((attribute) => attribute.key));
+  }
+
   async delete(entityId: string, key: string) {
+    await Text.of(this.ctx).unset(entityId, key);
     const id = await this.id(entityId, key);
     await this.database.deleteMany({
       where: {

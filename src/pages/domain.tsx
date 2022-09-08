@@ -21,7 +21,7 @@ export default strict.withUser((user, slug) => {
   const keyInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="max-w min-h-screen flex flex-col items-center justify-center">
+    <div className="w-full min-h-screen flex flex-col items-center justify-center">
       <div className="w-80 flex flex-col space-y-8">
         <form
           className="flex flex-col space-y-2"

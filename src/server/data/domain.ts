@@ -1,5 +1,6 @@
 import { Context } from "../context";
 import { Application } from "./application";
+import { Entity } from "./entity";
 
 export class Domain {
   private ctx: Context;
@@ -13,7 +14,7 @@ export class Domain {
   }
 
   private get database() {
-    return this.ctx.prisma.strn__domain;
+    return this.ctx.prisma.strnDomain;
   }
 
   private get application() {
@@ -76,6 +77,13 @@ export class Domain {
   }
 
   async remove(applicationKey: string, key: string) {
+    const entity = Entity.of(this.ctx);
+    const entityIds = await entity.ids(applicationKey, key);
+    await Promise.all(
+      entityIds.map(async (entityId) => {
+        await entity.delete(applicationKey, key, entityId);
+      })
+    );
     const applicationId = await this.application.id(applicationKey);
     await this.database.deleteMany({
       where: {

@@ -4,7 +4,10 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext } from "next";
 import * as supabase from "~/utils/supabase";
+import { NextApiHandlerProps } from "./next";
 import { Nullish } from "./nullish";
+
+export type Slug = string | string[];
 
 export type StrictWithUserProps = {
   user: SupabaseUser;
@@ -18,9 +21,9 @@ export type StrictUser = {
   role: string;
 };
 
-export const getUserRole = async (nextApiMethods: supabase.NextApiMethods) => {
+export const getUserRole = async (props: NextApiHandlerProps) => {
   try {
-    const auth = await supabase.auth(nextApiMethods);
+    const auth = await supabase.auth(props);
     const id = auth.user?.id;
     const role = () => supabase.service().from("role");
     let selected = await role().select("*").eq("id", id);
@@ -54,9 +57,7 @@ export const strict = {
 
     return await pageAuth(context);
   },
-  withUser: (
-    Component: (user: StrictUser, slug?: string | string[]) => JSX.Element
-  ) => {
+  withUser: (Component: (user: StrictUser, slug?: Slug) => JSX.Element) => {
     return ({ user, role, slug }: StrictWithUserProps) => {
       return Component(
         {
@@ -91,10 +92,7 @@ export const nullish = {
     };
   },
   withUser: (
-    Component: (
-      user: NullishUser,
-      slug?: string | string[] | Nullish
-    ) => JSX.Element
+    Component: (user: NullishUser, slug?: Slug | Nullish) => JSX.Element
   ) => {
     return ({ user, role, slug }: NullishWithUserProps) => {
       return Component(
