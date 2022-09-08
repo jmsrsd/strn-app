@@ -74,4 +74,14 @@ export class Domain {
       },
     });
   }
+
+  async remove(applicationKey: string, key: string) {
+    const applicationId = await this.application.id(applicationKey);
+    await this.database.deleteMany({
+      where: {
+        applicationId,
+        key,
+      },
+    });
+  }
 }

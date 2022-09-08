@@ -6,14 +6,15 @@ import { GetServerSidePropsContext } from "next";
 import * as supabase from "~/utils/supabase";
 import { Nullish } from "./nullish";
 
+export type StrictWithUserProps = {
+  user: SupabaseUser;
+  role: string;
+  slug?: string | string[];
+};
+
 export type StrictUser = {
   id: string;
   email: string;
-  role: string;
-};
-
-export type StrictWithUserProps = {
-  user: SupabaseUser;
   role: string;
 };
 
@@ -32,41 +33,52 @@ export const getUserRole = async (nextApiMethods: supabase.NextApiMethods) => {
     }
     return `${(selected.data ?? [])[0].value}`;
   } catch (e) {
-    return `guest`;
+    return "guest";
   }
 };
 
 export const strict = {
-  getServerSideUser: withPageAuth({
-    redirectTo: "/login",
-    getServerSideProps: async ({ req, res }) => {
-      const methods: any = { req, res };
-      return {
-        props: {
-          role: await getUserRole(methods),
+  getServerSideUser: async (context: GetServerSidePropsContext) => {
+    const pageAuth = withPageAuth({
+      redirectTo: "/login",
+      getServerSideProps: async ({ req, res }) => {
+        const methods: any = { req, res };
+        return {
+          props: {
+            role: await getUserRole(methods),
+            slug: context.params?.slug ?? null,
+          },
+        };
+      },
+    });
+
+    return await pageAuth(context);
+  },
+  withUser: (
+    Component: (user: StrictUser, slug?: string | string[]) => JSX.Element
+  ) => {
+    return ({ user, role, slug }: StrictWithUserProps) => {
+      return Component(
+        {
+          id: user.id,
+          email: user.email!,
+          role: role,
         },
-      };
-    },
-  }),
-  withUser: (Component: (user: StrictUser) => JSX.Element) => {
-    return ({ user, role }: StrictWithUserProps) => {
-      return Component({
-        id: user.id,
-        email: user.email!,
-        role: role,
-      });
+        slug
+      );
     };
   },
+};
+
+export type NullishWithUserProps = {
+  user?: SupabaseUser | Nullish;
+  role?: string | Nullish;
+  slug?: string | string[] | Nullish;
 };
 
 export type NullishUser = {
   id?: string | Nullish;
   email?: string | Nullish;
-  role?: string | Nullish;
-};
-
-export type NullishWithUserProps = {
-  user?: SupabaseUser | Nullish;
   role?: string | Nullish;
 };
 
@@ -78,13 +90,21 @@ export const nullish = {
       props,
     };
   },
-  withUser: (Component: (user: NullishUser) => JSX.Element) => {
-    return ({ user, role }: NullishWithUserProps) => {
-      return Component({
-        id: user?.id,
-        email: user?.email,
-        role: role,
-      });
+  withUser: (
+    Component: (
+      user: NullishUser,
+      slug?: string | string[] | Nullish
+    ) => JSX.Element
+  ) => {
+    return ({ user, role, slug }: NullishWithUserProps) => {
+      return Component(
+        {
+          id: user?.id,
+          email: user?.email,
+          role: role,
+        },
+        slug
+      );
     };
   },
 };

@@ -1,18 +1,23 @@
-import { LegacyRef, useRef } from "react";
+import { useRef } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { trpc } from "~/utils/trpc";
 import { strict } from "~/utils/user";
 
 export const getServerSideProps = strict.getServerSideUser;
 
-export default strict.withUser((user) => {
+export default strict.withUser((user, slug) => {
   const keys = trpc.useQuery(["domain.keys"]);
   const add = trpc.useMutation(["domain.add"], {
     onSuccess: async (id) => {
       await keys.refetch();
     },
   });
-  const isLoading = keys.isLoading || add.isLoading;
+  const remove = trpc.useMutation(["domain.remove"], {
+    onSuccess: async () => {
+      await keys.refetch();
+    },
+  });
+  const isLoading = keys.isLoading || add.isLoading || remove.isLoading;
   const keyInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -39,14 +44,28 @@ export default strict.withUser((user) => {
               <LoadingSpinner />
             </div>
           ) : (
-            <button type="submit">ADD KEY</button>
+            <button className="bg-black text-white font-bold" type="submit">
+              ADD KEY
+            </button>
           )}
         </form>
         <div className="flex flex-col space-y-2">
           {keys.isLoading
             ? "Loading..."
             : keys.data?.map((key, i) => {
-                return <div key={i}>{key}</div>;
+                return (
+                  <div className="flex flex-row" key={i}>
+                    <div className="flex-auto">{key}</div>
+                    <button
+                      onClick={async () => {
+                        await remove.mutateAsync(key);
+                      }}
+                      disabled={remove.isLoading}
+                    >
+                      ❌
+                    </button>
+                  </div>
+                );
               })}
         </div>
       </div>

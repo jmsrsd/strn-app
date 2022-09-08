@@ -18,4 +18,11 @@ export const domainRouter = createRouter()
       const domain = Domain.of(ctx);
       return await domain.id(appKey, key);
     }),
+  })
+  .mutation("remove", {
+    input: z.string(),
+    resolve: withRouteAuth(async ({ ctx, input: key }) => {
+      const domain = Domain.of(ctx);
+      await domain.remove(appKey, key);
+    }),
   });
