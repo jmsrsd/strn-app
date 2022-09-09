@@ -13,10 +13,10 @@ export class Attribute {
   }
 
   private get database() {
-    return this.ctx.prisma.strnAttribute;
+    return this.ctx.prisma.strn_attribute;
   }
 
-  async id(entityId: string, key: string) {
+  async id(entity_id: string, key: string) {
     const id = await this.database
       .findFirst({
         select: {
@@ -24,10 +24,12 @@ export class Attribute {
         },
         where: {
           key,
-          entityId,
+          entity_id,
         },
       })
-      .then((attribute) => attribute?.id);
+      .then((attribute) => {
+        return attribute?.id;
+      });
     if (!!id) return id;
     return await this.database
       .create({
@@ -36,32 +38,38 @@ export class Attribute {
         },
         data: {
           key,
-          entityId,
+          entity_id,
         },
       })
-      .then((attribute) => attribute.id);
+      .then((attribute) => {
+        return attribute.id;
+      });
   }
 
-  async keys(entityId: string) {
+  async keys(entity_id: string) {
     return await this.database
       .findMany({
         select: {
           key: true,
         },
         where: {
-          entityId,
+          entity_id,
         },
       })
-      .then((attributes) => attributes.map((attribute) => attribute.key));
+      .then((attributes) => {
+        return attributes.map((attribute) => {
+          return attribute.key;
+        });
+      });
   }
 
-  async delete(entityId: string, key: string) {
-    await Text.of(this.ctx).unset(entityId, key);
-    const id = await this.id(entityId, key);
+  async delete(entity_id: string, key: string) {
+    await Text.of(this.ctx).unset(entity_id, key);
+    const id = await this.id(entity_id, key);
     await this.database.deleteMany({
       where: {
         id,
-        entityId,
+        entity_id,
         key,
       },
     });

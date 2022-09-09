@@ -13,25 +13,27 @@ export class Text {
   }
 
   private get database() {
-    return this.ctx.prisma.strnText;
+    return this.ctx.prisma.strn_text;
   }
 
   private get attribute() {
     return Attribute.of(this.ctx);
   }
 
-  async id(entityId: string, attributeKey: string) {
-    const attributeId = await this.attribute.id(entityId, attributeKey);
+  async id(entity_id: string, attribute_key: string) {
+    const attribute_id = await this.attribute.id(entity_id, attribute_key);
     const id = await this.database
       .findFirst({
         select: {
           id: true,
         },
         where: {
-          attributeId,
+          attribute_id,
         },
       })
-      .then((field) => field?.id);
+      .then((field) => {
+        return field?.id;
+      });
     if (!!id) return id;
     return await this.database
       .create({
@@ -39,29 +41,33 @@ export class Text {
           id: true,
         },
         data: {
-          attributeId,
+          attribute_id,
           text: "",
         },
       })
-      .then((attribute) => attribute.id);
+      .then((attribute) => {
+        return attribute.id;
+      });
   }
 
-  async get(entityId: string, attributeKey: string) {
-    const attributeId = await this.attribute.id(entityId, attributeKey);
+  async get(entity_id: string, attribute_key: string) {
+    const attribute_id = await this.attribute.id(entity_id, attribute_key);
     return await this.database
       .findFirst({
         select: {
           text: true,
         },
         where: {
-          attributeId,
+          attribute_id,
         },
       })
-      .then((field) => field?.text);
+      .then((field) => {
+        return field?.text;
+      });
   }
 
-  async set(entityId: string, attributeKey: string, text: string) {
-    const id = await this.id(entityId, attributeKey);
+  async set(entity_id: string, attribute_key: string, text: string) {
+    const id = await this.id(entity_id, attribute_key);
     await this.database.update({
       where: {
         id,
@@ -72,11 +78,11 @@ export class Text {
     });
   }
 
-  async unset(entityId: string, attributeKey: string) {
-    const attributeId = await this.attribute.id(entityId, attributeKey);
+  async unset(entity_id: string, attribute_key: string) {
+    const attribute_id = await this.attribute.id(entity_id, attribute_key);
     await this.database.deleteMany({
       where: {
-        attributeId,
+        attribute_id,
       },
     });
   }

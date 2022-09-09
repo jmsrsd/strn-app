@@ -13,15 +13,21 @@ export const domainRouter = createRouter()
     }),
   })
   .mutation("add", {
-    input: z.string(),
-    resolve: withRouteAuth(async ({ ctx, input: key }) => {
+    input: z.object({
+      key: z.string(),
+    }),
+    resolve: withRouteAuth(async ({ ctx, input }) => {
+      const { key } = input;
       const domain = Domain.of(ctx);
       return await domain.id(appKey, key);
     }),
   })
   .mutation("remove", {
-    input: z.string(),
-    resolve: withRouteAuth(async ({ ctx, input: key }) => {
+    input: z.object({
+      key: z.string(),
+    }),
+    resolve: withRouteAuth(async ({ ctx, input }) => {
+      const { key } = input;
       const domain = Domain.of(ctx);
       await domain.remove(appKey, key);
     }),

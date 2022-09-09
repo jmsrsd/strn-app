@@ -19,8 +19,8 @@ export default strict.withUser((user) => {
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center">
-      <div className="w-80 flex flex-col items-start space-y-4">
+    <div className="w-full min-h-screen flex flex-col items-center justify-start">
+      <div className="my-80 w-80 flex flex-col items-start space-y-8">
         <h1 className="text-xl">Posts</h1>
         <form
           className="flex flex-col space-y-2 w-full"
@@ -46,15 +46,15 @@ export default strict.withUser((user) => {
             {add.isLoading || remove.isLoading ? `LOADING...` : `ADD POST`}
           </button>
         </form>
-        <div className="flex flex-col space-y-2 w-full">
+        <div className="flex flex-col space-y-4 w-full">
           {titles.isLoading ? (
             <div>Loading...</div>
           ) : (
             Object.keys(titles.data ?? []).map((id, i) => {
               const title = (titles.data ?? {})[id];
               return (
-                <div className="flex flex-row" key={i}>
-                  <div className="grow">{`${title}`}</div>
+                <div className="flex flex-row space-x-4" key={i}>
+                  <div className="grow truncate">{`${title}`}</div>
                   <button
                     onClick={async () => {
                       remove.mutate({ id });

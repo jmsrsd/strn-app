@@ -14,46 +14,48 @@ export class Entity {
   }
 
   private get database() {
-    return this.ctx.prisma.strnEntity;
+    return this.ctx.prisma.strn_entity;
   }
 
   private get domain() {
     return Domain.of(this.ctx);
   }
 
-  async create(applicationKey: string, domainKey: string) {
-    const domainId = await this.domain.id(applicationKey, domainKey);
+  async create(application_key: string, domain_key: string) {
+    const domain_id = await this.domain.id(application_key, domain_key);
     return await this.database
       .create({
         select: {
           id: true,
         },
         data: {
-          domainId,
+          domain_id,
         },
       })
-      .then((entity) => entity.id);
+      .then((entity) => {
+        return entity.id;
+      });
   }
 
-  async delete(applicationKey: string, domainKey: string, id: string) {
+  async delete(application_key: string, domain_key: string, id: string) {
     const attribute = Attribute.of(this.ctx);
-    const attibuteKeys = await attribute.keys(id);
+    const attibute_keys = await attribute.keys(id);
     await Promise.all(
-      attibuteKeys.map(async (attibuteKey) => {
-        await attribute.delete(id, attibuteKey);
+      attibute_keys.map(async (attibute_key) => {
+        await attribute.delete(id, attibute_key);
       })
     );
-    const domainId = await this.domain.id(applicationKey, domainKey);
+    const domain_id = await this.domain.id(application_key, domain_key);
     await this.database.deleteMany({
       where: {
         id,
-        domainId,
+        domain_id,
       },
     });
   }
 
-  async exist(applicationKey: string, domainKey: string, id: string) {
-    const domainId = await this.domain.id(applicationKey, domainKey);
+  async exist(application_key: string, domain_key: string, id: string) {
+    const domain_id = await this.domain.id(application_key, domain_key);
     return await this.database
       .findFirst({
         select: {
@@ -61,20 +63,22 @@ export class Entity {
         },
         where: {
           id,
-          domainId,
+          domain_id,
         },
       })
-      .then((entity) => !!entity?.id);
+      .then((entity) => {
+        return !!entity?.id;
+      });
   }
 
   async ids(
-    applicationKey: string,
-    domainKey: string,
+    application_key: string,
+    domain_key: string,
     options?:
       | { skip?: number | undefined; take?: number | undefined }
       | undefined
   ) {
-    const domainId = await this.domain.id(applicationKey, domainKey);
+    const domain_id = await this.domain.id(application_key, domain_key);
     const { skip, take } = options ?? {};
     return await this.database
       .findMany({
@@ -82,7 +86,7 @@ export class Entity {
           id: true,
         },
         where: {
-          domainId,
+          domain_id,
         },
         orderBy: {
           id: "desc",
@@ -90,14 +94,18 @@ export class Entity {
         skip,
         take,
       })
-      .then((entities) => entities.map((entity) => entity.id));
+      .then((entities) => {
+        return entities.map((entity) => {
+          return entity.id;
+        });
+      });
   }
 
-  async count(applicationKey: string, domainKey: string) {
-    const domainId = await this.domain.id(applicationKey, domainKey);
+  async count(application_key: string, domain_key: string) {
+    const domain_id = await this.domain.id(application_key, domain_key);
     return await this.database.count({
       where: {
-        domainId,
+        domain_id,
       },
     });
   }

@@ -13,7 +13,7 @@ export class Application {
   }
 
   private get database() {
-    return this.ctx.prisma.strnApplication;
+    return this.ctx.prisma.strn_application;
   }
 
   async id(key: string) {
@@ -26,7 +26,9 @@ export class Application {
           key,
         },
       })
-      .then((application) => application?.id);
+      .then((application) => {
+        return application?.id;
+      });
     if (!!id) return id;
     return await this.database
       .create({
@@ -37,7 +39,9 @@ export class Application {
           key,
         },
       })
-      .then((application) => application.id);
+      .then((application) => {
+        return application.id;
+      });
   }
 
   async keys() {
@@ -51,7 +55,9 @@ export class Application {
         },
       })
       .then((applications) => {
-        return applications.map((application) => application.key);
+        return applications.map((application) => {
+          return application.key;
+        });
       });
   }
 
@@ -61,10 +67,10 @@ export class Application {
 
   async remove(key: string) {
     const domain = Domain.of(this.ctx);
-    const domainKeys = await domain.keys(key);
+    const domain_keys = await domain.keys(key);
     await Promise.all(
-      domainKeys.map(async (domainKey) => {
-        await domain.remove(key, domainKey);
+      domain_keys.map(async (domain_key) => {
+        await domain.remove(key, domain_key);
       })
     );
     await this.database.deleteMany({

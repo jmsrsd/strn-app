@@ -14,26 +14,28 @@ export class Domain {
   }
 
   private get database() {
-    return this.ctx.prisma.strnDomain;
+    return this.ctx.prisma.strn_domain;
   }
 
   private get application() {
     return Application.of(this.ctx);
   }
 
-  async id(applicationKey: string, key: string) {
-    const applicationId = await this.application.id(applicationKey);
+  async id(application_key: string, key: string) {
+    const application_id = await this.application.id(application_key);
     const id = await this.database
       .findFirst({
         select: {
           id: true,
         },
         where: {
-          applicationId,
+          application_id,
           key,
         },
       })
-      .then((domain) => domain?.id);
+      .then((domain) => {
+        return domain?.id;
+      });
     if (!!id) return id;
     return await this.database
       .create({
@@ -41,53 +43,57 @@ export class Domain {
           id: true,
         },
         data: {
-          applicationId,
+          application_id,
           key,
         },
       })
-      .then((domain) => domain.id);
+      .then((domain) => {
+        return domain.id;
+      });
   }
 
-  async keys(applicationKey: string) {
-    const applicationId = await this.application.id(applicationKey);
+  async keys(application_key: string) {
+    const application_id = await this.application.id(application_key);
     return await this.database
       .findMany({
         select: {
           key: true,
         },
         where: {
-          applicationId,
+          application_id,
         },
         orderBy: {
           key: "asc",
         },
       })
       .then((domains) => {
-        return domains.map((domain) => domain.key);
+        return domains.map((domain) => {
+          return domain.key;
+        });
       });
   }
 
-  async count(applicationKey: string) {
-    const applicationId = await this.application.id(applicationKey);
+  async count(application_key: string) {
+    const application_id = await this.application.id(application_key);
     return await this.database.count({
       where: {
-        applicationId,
+        application_id,
       },
     });
   }
 
-  async remove(applicationKey: string, key: string) {
+  async remove(application_key: string, key: string) {
     const entity = Entity.of(this.ctx);
-    const entityIds = await entity.ids(applicationKey, key);
+    const entity_ids = await entity.ids(application_key, key);
     await Promise.all(
-      entityIds.map(async (entityId) => {
-        await entity.delete(applicationKey, key, entityId);
+      entity_ids.map(async (entity_id) => {
+        await entity.delete(application_key, key, entity_id);
       })
     );
-    const applicationId = await this.application.id(applicationKey);
+    const application_id = await this.application.id(application_key);
     await this.database.deleteMany({
       where: {
-        applicationId,
+        application_id,
         key,
       },
     });

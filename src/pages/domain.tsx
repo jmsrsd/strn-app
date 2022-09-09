@@ -29,7 +29,7 @@ export default strict.withUser((user, slug) => {
             e.preventDefault();
             const key = keyInputRef.current?.value;
             if (!key) return;
-            await add.mutateAsync(key);
+            await add.mutateAsync({ key });
             keyInputRef.current.value = "";
           }}
         >
@@ -58,7 +58,7 @@ export default strict.withUser((user, slug) => {
                     <div className="flex-auto">{key}</div>
                     <button
                       onClick={async () => {
-                        await remove.mutateAsync(key);
+                        await remove.mutateAsync({ key });
                       }}
                       disabled={remove.isLoading}
                     >
