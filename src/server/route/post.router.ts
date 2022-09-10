@@ -1,7 +1,5 @@
 import { z } from "zod";
 import { createRouter, withRouteAuth } from "~/server/router";
-import { Entity } from "../data/entity";
-import { Text } from "../data/text";
 import { appKey } from "./app.router";
 
 export const postKey = "post";

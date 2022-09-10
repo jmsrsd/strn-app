@@ -15,3 +15,33 @@ export const serialize = (value: any) => {
   const parsed = JSON.parse(stringified);
   return parsed;
 };
+
+export type Enumerable<T> = T | Array<T>;
+
+export type NestedStringFilter = {
+  equals?: string;
+  in?: Enumerable<string>;
+  notIn?: Enumerable<string>;
+  lt?: string;
+  lte?: string;
+  gt?: string;
+  gte?: string;
+  contains?: string;
+  startsWith?: string;
+  endsWith?: string;
+  not?: NestedStringFilter | string;
+};
+
+export type StringFilter = {
+  equals?: string;
+  in?: Enumerable<string>;
+  notIn?: Enumerable<string>;
+  lt?: string;
+  lte?: string;
+  gt?: string;
+  gte?: string;
+  contains?: string;
+  startsWith?: string;
+  endsWith?: string;
+  not?: NestedStringFilter | string;
+};

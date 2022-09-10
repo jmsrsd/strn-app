@@ -40,11 +40,11 @@ model strn_attribute {
 model strn_text {
   id           String @id @unique() @default(cuid()) @db.VarChar(63)
   attribute_id String @db.VarChar(63)
-  text         String @db.VarChar(4095)
+  value        String @db.VarChar(4095)
 }
 
 model strn_file {
   id           String @id @unique() @default(cuid()) @db.VarChar(63)
   attribute_id String @db.VarChar(63)
-  file         Bytes  @db.MediumBlob
+  value        Bytes  @db.MediumBlob
 }
