@@ -70,25 +70,24 @@ export class Database {
   }
 
   async drop(query: DatabasePointerQuery) {
-    const length = query.pointer.length;
-    const weakPointer: (string | Nullish)[] = [...query.pointer];
-    const pointer = { ...weakPointer };
-    const application = this.application(pointer[0] ?? "");
-    const domain = application.domain(pointer[1] ?? "");
-    const entity = domain.entity(pointer[2] ?? "");
-    const attribute = entity.attribute(pointer[3] ?? "");
-    switch (length) {
-      case 1:
-        return await application.drop();
-      case 2:
-        return await domain.drop();
-      case 3:
-        return await entity.drop();
-      case 4:
-        return await attribute.drop();
-      default:
-        return;
-    }
+    const nullishPointer: (string | Nullish)[] = [...query.pointer];
+    const pointer = { ...nullishPointer };
+    const attribute = this.application(pointer[0] ?? "")
+      .domain(pointer[1] ?? "")
+      .entity(pointer[2] ?? "")
+      .attribute(pointer[3] ?? "");
+    const drops = [
+      attribute.entity.domain.application.drop,
+      attribute.entity.domain.drop,
+      attribute.entity.drop,
+      attribute.drop,
+    ];
+    const dropAt = query.pointer.length - 1;
+    await Promise.all(
+      drops
+        .filter((_, index) => index === dropAt)
+        .map(async (drop) => await drop())
+    );
   }
 }
 
@@ -101,22 +100,18 @@ export class Application {
     this.key = key;
   }
 
-  get orm() {
-    return this.database.orm;
-  }
-
   async id() {
     const select = { id: true };
     const where = { key: this.key };
     const data = where;
-    const id = await this.orm.application
+    const id = await this.database.orm.application
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return id;
-    return await this.orm.application
+    return await this.database.orm.application
       .create({
         select,
         data,
@@ -129,7 +124,7 @@ export class Application {
   }
 
   async domains() {
-    return await this.orm.domain
+    return await this.database.orm.domain
       .findMany({
         select: { key: true },
         where: { application_id: await this.id() },
@@ -145,7 +140,7 @@ export class Application {
     for (const domain of domains) {
       await domain.drop();
     }
-    await this.orm.application.deleteMany({
+    await this.database.orm.application.deleteMany({
       where: { id: await this.id() },
     });
   }
@@ -160,8 +155,8 @@ export class Domain {
     this.key = key;
   }
 
-  get orm() {
-    return this.application.orm;
+  get database() {
+    return this.application.database;
   }
 
   async id() {
@@ -171,14 +166,14 @@ export class Domain {
       key: this.key,
     };
     const data = where;
-    const id = await this.orm.domain
+    const id = await this.database.orm.domain
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return id;
-    return await this.orm.domain
+    return await this.database.orm.domain
       .create({
         select,
         data,
@@ -191,7 +186,7 @@ export class Domain {
   }
 
   async entities() {
-    return await this.orm.entity
+    return await this.database.orm.entity
       .findMany({
         select: { id: true },
         where: { domain_id: await this.id() },
@@ -207,7 +202,7 @@ export class Domain {
     for (const entity of entities) {
       await entity.drop();
     }
-    await this.orm.domain.deleteMany({
+    await this.database.orm.domain.deleteMany({
       where: { id: await this.id() },
     });
   }
@@ -222,8 +217,8 @@ export class Entity {
     this.id = id;
   }
 
-  get orm() {
-    return this.domain.orm;
+  get database() {
+    return this.domain.database;
   }
 
   async ensure() {
@@ -232,14 +227,14 @@ export class Entity {
       domain_id: await this.domain.id(),
     };
     const data = where;
-    const id = await this.orm.entity
+    const id = await this.database.orm.entity
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return this;
-    await this.orm.entity.create({
+    await this.database.orm.entity.create({
       select,
       data,
     });
@@ -251,7 +246,7 @@ export class Entity {
   }
 
   async attributes() {
-    return await this.orm.attribute
+    return await this.database.orm.attribute
       .findMany({
         select: { key: true },
         where: { entity_id: this.id },
@@ -267,7 +262,7 @@ export class Entity {
     for (const attribute of attributes) {
       await attribute.drop();
     }
-    await this.orm.entity.deleteMany({
+    await this.database.orm.entity.deleteMany({
       where: { id: this.id },
     });
   }
@@ -282,8 +277,8 @@ export class Attribute {
     this.key = key;
   }
 
-  get orm() {
-    return this.entity.orm;
+  get database() {
+    return this.entity.database;
   }
 
   async id() {
@@ -294,14 +289,14 @@ export class Attribute {
       key: this.key,
     };
     const data = where;
-    const id = await this.orm.attribute
+    const id = await this.database.orm.attribute
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return id;
-    return await this.orm.attribute
+    return await this.database.orm.attribute
       .create({
         select,
         data,
@@ -318,9 +313,9 @@ export class Attribute {
   }
 
   async drop() {
-    await this.text.drop();
-    await this.file.drop();
-    await this.orm.attribute.deleteMany({
+    const drops = [this.text.drop, this.file.drop];
+    await Promise.all(drops.map(async (drop) => await drop()));
+    await this.database.orm.attribute.deleteMany({
       where: { id: await this.id() },
     });
   }
@@ -333,8 +328,8 @@ export class Text {
     this.attribute = attribute;
   }
 
-  get orm() {
-    return this.attribute.orm;
+  get database() {
+    return this.attribute.database;
   }
 
   async id() {
@@ -342,14 +337,14 @@ export class Text {
     const where = {
       attribute_id: await this.attribute.id(),
     };
-    const id = await this.orm.text
+    const id = await this.database.orm.text
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return id;
-    return await this.orm.text
+    return await this.database.orm.text
       .create({
         select,
         data: {
@@ -362,7 +357,7 @@ export class Text {
 
   async get() {
     const id = await this.id();
-    return this.orm.text
+    return this.database.orm.text
       .findFirst({
         select: { value: true },
         where: { id },
@@ -371,7 +366,7 @@ export class Text {
   }
 
   async set(value: string) {
-    await this.orm.text.update({
+    await this.database.orm.text.update({
       select: null,
       where: { id: await this.id() },
       data: { value },
@@ -379,7 +374,7 @@ export class Text {
   }
 
   async drop() {
-    await this.orm.text.deleteMany({
+    await this.database.orm.text.deleteMany({
       where: { id: await this.id() },
     });
   }
@@ -392,8 +387,8 @@ export class File {
     this.attribute = attribute;
   }
 
-  get orm() {
-    return this.attribute.orm;
+  get database() {
+    return this.attribute.database;
   }
 
   async id() {
@@ -401,14 +396,14 @@ export class File {
     const where = {
       attribute_id: await this.attribute.id(),
     };
-    const id = await this.orm.file
+    const id = await this.database.orm.file
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return id;
-    return await this.orm.file
+    return await this.database.orm.file
       .create({
         select,
         data: {
@@ -421,7 +416,7 @@ export class File {
 
   async get() {
     const id = await this.id();
-    return this.orm.file
+    return this.database.orm.file
       .findFirst({
         select: { value: true },
         where: { id },
@@ -432,7 +427,7 @@ export class File {
   }
 
   async set(value: Buffer) {
-    await this.orm.file.update({
+    await this.database.orm.file.update({
       select: null,
       where: { id: await this.id() },
       data: { value },
@@ -440,7 +435,7 @@ export class File {
   }
 
   async drop() {
-    await this.orm.file.deleteMany({
+    await this.database.orm.file.deleteMany({
       where: { id: await this.id() },
     });
   }
