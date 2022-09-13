@@ -16,6 +16,7 @@
     "@trpc/next": "^9.27.2",
     "@trpc/react": "^9.27.2",
     "@trpc/server": "^9.27.2",
+    "change-case": "^4.1.2",
     "cuid": "^2.1.8",
     "next": "latest",
     "react": "18.1.0",

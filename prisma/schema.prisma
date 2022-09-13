@@ -40,6 +40,18 @@ model strn_attribute {
 model strn_text {
   id           String @id @unique() @default(cuid()) @db.VarChar(63)
   attribute_id String @db.VarChar(63)
+  value        String @db.VarChar(511)
+}
+
+model strn_numeric {
+  id           String @id @unique() @default(cuid()) @db.VarChar(63)
+  attribute_id String @db.VarChar(63)
+  value        Float @db.Double
+}
+
+model strn_document {
+  id           String @id @unique() @default(cuid()) @db.VarChar(63)
+  attribute_id String @db.VarChar(63)
   value        String @db.VarChar(4095)
 }
 

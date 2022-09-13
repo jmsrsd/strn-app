@@ -1,18 +1,32 @@
-import { Nullish } from "~/utils/nullish";
+import { Nullish } from "~/utils/types";
 import { Context } from "./context";
 
+export type DatabaseId = string;
+
+export type DatabaseKey = string;
+
+export type DatabaseSetType = "text" | "document" | "numeric";
+
+export type DatabaseSetValue = string | number;
+
+export type DatabaseRow = {
+  applicationKey: DatabaseKey;
+  domainKey: DatabaseKey;
+  entityId: DatabaseId;
+  attributeKey: DatabaseKey;
+};
+
 export type DatabaseWhereQuery = {
-  where: {
-    applicationKey: string;
-    domainKey: string;
-    entityId: string;
-    attributeKey: string;
-  };
+  where: DatabaseRow;
 };
 
 export type DatabasePointerQuery = {
   pointer: string[];
 };
+
+export interface DatabaseDroppable {
+  drop(): Promise<void>;
+}
 
 export class Database {
   readonly ctx: Context;
@@ -21,7 +35,7 @@ export class Database {
     this.ctx = ctx;
   }
 
-  application(key: string) {
+  application(key: DatabaseKey) {
     return new Application(this, key);
   }
 
@@ -37,11 +51,13 @@ export class Database {
     const { prisma } = this.ctx;
     return {
       application: prisma.strn_application,
-      attribute: prisma.strn_attribute,
       domain: prisma.strn_domain,
       entity: prisma.strn_entity,
-      file: prisma.strn_file,
+      attribute: prisma.strn_attribute,
       text: prisma.strn_text,
+      numeric: prisma.strn_numeric,
+      document: prisma.strn_document,
+      file: prisma.strn_file,
     };
   }
 
@@ -50,13 +66,26 @@ export class Database {
     return await attribute.text.get();
   }
 
-  async numeric(query: DatabaseWhereQuery) {
-    return await this.text(query).then((text) => +text || 0);
+  async document(query: DatabaseWhereQuery) {
+    const attribute = await this.attribute(query);
+    return await attribute.document.get();
   }
 
-  async set(value: string | number, query: DatabaseWhereQuery) {
+  async numeric(query: DatabaseWhereQuery) {
     const attribute = await this.attribute(query);
-    await attribute.text.set(`${value}`);
+    return await attribute.numeric.get();
+  }
+
+  async set(type: DatabaseSetType, value: DatabaseSetValue, query: DatabaseWhereQuery) {
+    const attribute = await this.attribute(query);
+    switch (type) {
+      case "text":
+        return await attribute.text.set(`${value}`);
+      case "numeric":
+        return await attribute.numeric.set(+value);
+      case "document":
+        return await attribute.document.set(`${value}`);
+    }
   }
 
   async download(query: DatabaseWhereQuery) {
@@ -76,26 +105,134 @@ export class Database {
       .domain(pointer[1] ?? "")
       .entity(pointer[2] ?? "")
       .attribute(pointer[3] ?? "");
-    const drops = [
-      attribute.entity.domain.application.drop,
-      attribute.entity.domain.drop,
-      attribute.entity.drop,
-      attribute.drop,
+    const droppables: DatabaseDroppable[] = [
+      attribute.entity.domain.application,
+      attribute.entity.domain,
+      attribute.entity,
+      attribute,
     ];
     const dropAt = query.pointer.length - 1;
     await Promise.all(
-      drops
+      droppables
         .filter((_, index) => index === dropAt)
-        .map(async (drop) => await drop())
+        .map(async (droppable) => await droppable.drop()),
     );
+  }
+
+  async find(
+    mode: "first" | "many",
+    application: string,
+    domain: string,
+    key: DatabaseSetType,
+    where: {
+      equals?: string | number;
+      in?: string | number | (string | number)[];
+      notIn?: string | number | (string | number)[];
+      lt?: string | number;
+      lte?: string | number;
+      gt?: string | number;
+      gte?: string | number;
+      contains?: string;
+      startsWith?: string;
+      endsWith?: string;
+      not?: number;
+    },
+    take: number | undefined,
+    skip: number | undefined,
+  ) {
+    const { equals, in: in_, notIn, lt, lte, gt, gte, contains, startsWith, endsWith, not } = where;
+    const stringWhere = {
+      equals: equals as string | undefined,
+      in: in_ as string | string[] | undefined,
+      notIn: notIn as string | string[] | undefined,
+      lt: lt as string | undefined,
+      lte: lte as string | undefined,
+      gt: gt as string | undefined,
+      gte: gte as string | undefined,
+      contains,
+      startsWith,
+      endsWith,
+    };
+    const stringQuery = {
+      select: { attribute_id: true },
+      where: {
+        value: stringWhere,
+      },
+      take,
+      skip,
+    };
+    const numberQuery = {
+      select: { attribute_id: true },
+      where: {
+        value: {
+          equals: equals as number | undefined,
+          in: in_ as number | number[] | undefined,
+          notIn: notIn as number | number[] | undefined,
+          lt: lt as number | undefined,
+          lte: lte as number | undefined,
+          gt: gt as number | undefined,
+          gte: gte as number | undefined,
+          not,
+        },
+      },
+      take,
+      skip,
+    };
+    let attribute_ids: string[] | null | undefined = [];
+    switch (key) {
+      case "text": {
+        const text = this.orm.text;
+        if (mode == "many") {
+          attribute_ids = await text.findMany(stringQuery).then((founds) => founds.map((found) => found.attribute_id));
+        } else {
+          attribute_ids.push(`${await text.findFirst(stringQuery).then((found) => found?.attribute_id)}`);
+        }
+        break;
+      }
+      case "numeric": {
+        const numeric = this.orm.numeric;
+        if (mode == "many") {
+          attribute_ids = await numeric.findMany(numberQuery).then((founds) =>
+            founds.map((found) => found.attribute_id)
+          );
+        } else {
+          attribute_ids.push(`${await numeric.findFirst(numberQuery).then((found) => found?.attribute_id)}`);
+        }
+        break;
+      }
+      case "document": {
+        const document = this.orm.document;
+        if (mode == "many") {
+          attribute_ids = await document.findMany(stringQuery).then((founds) =>
+            founds.map((found) => found.attribute_id)
+          );
+        } else {
+          attribute_ids.push(`${await document.findFirst(stringQuery).then((found) => found?.attribute_id)}`);
+        }
+        break;
+      }
+    }
+
+    if (!attribute_ids) return [] as string[];
+
+    const selected = await Promise.all(attribute_ids.map(async (attribute_id) => {
+      return await this.orm.attribute.findMany({
+        select: { entity_id: true },
+        where: { id: `${attribute_id}` },
+      }).then((founds) => founds.map((found) => found.entity_id));
+    })).then((selected) => selected.reduce((p, c) => [...p, ...c]));
+
+    return await this.application(application).domain(domain).entities().then((entities) => {
+      return entities.map((entity) => entity.id).filter((id) => selected.includes(id));
+    });
   }
 }
 
-export class Application {
+export class Application implements DatabaseDroppable {
   readonly database: Database;
-  readonly key: string;
+  readonly key: DatabaseKey;
 
-  constructor(database: Database, key: string) {
+  constructor(database: Database, key: DatabaseKey) {
     this.database = database;
     this.key = key;
   }
@@ -119,7 +256,7 @@ export class Application {
       .then((created) => created.id);
   }
 
-  domain(key: string) {
+  domain(key: DatabaseKey) {
     return new Domain(this, key);
   }
 
@@ -128,6 +265,7 @@ export class Application {
       .findMany({
         select: { key: true },
         where: { application_id: await this.id() },
+        orderBy: { "id": "desc" },
       })
       .then((found) => {
         const keys = found.map(({ key }) => key);
@@ -146,11 +284,11 @@ export class Application {
   }
 }
 
-export class Domain {
+export class Domain implements DatabaseDroppable {
   readonly application: Application;
-  readonly key: string;
+  readonly key: DatabaseKey;
 
-  constructor(application: Application, key: string) {
+  constructor(application: Application, key: DatabaseKey) {
     this.application = application;
     this.key = key;
   }
@@ -181,7 +319,7 @@ export class Domain {
       .then((created) => created.id);
   }
 
-  entity(id: string) {
+  entity(id: DatabaseId) {
     return new Entity(this, id);
   }
 
@@ -190,6 +328,7 @@ export class Domain {
       .findMany({
         select: { id: true },
         where: { domain_id: await this.id() },
+        orderBy: { "id": "desc" },
       })
       .then((found) => {
         const ids = found.map(({ id }) => id);
@@ -208,11 +347,11 @@ export class Domain {
   }
 }
 
-export class Entity {
+export class Entity implements DatabaseDroppable {
   readonly domain: Domain;
-  readonly id: string;
+  readonly id: DatabaseId;
 
-  constructor(domain: Domain, id: string) {
+  constructor(domain: Domain, id: DatabaseId) {
     this.domain = domain;
     this.id = id;
   }
@@ -241,7 +380,7 @@ export class Entity {
     return this;
   }
 
-  attribute(key: string) {
+  attribute(key: DatabaseKey) {
     return new Attribute(this, key);
   }
 
@@ -250,6 +389,7 @@ export class Entity {
       .findMany({
         select: { key: true },
         where: { entity_id: this.id },
+        orderBy: { "id": "desc" },
       })
       .then((found) => {
         const keys = found.map(({ key }) => key);
@@ -268,11 +408,11 @@ export class Entity {
   }
 }
 
-export class Attribute {
+export class Attribute implements DatabaseDroppable {
   readonly entity: Entity;
-  readonly key: string;
+  readonly key: DatabaseKey;
 
-  constructor(entity: Entity, key: string) {
+  constructor(entity: Entity, key: DatabaseKey) {
     this.entity = entity;
     this.key = key;
   }
@@ -308,20 +448,28 @@ export class Attribute {
     return new Text(this);
   }
 
+  get numeric() {
+    return new Numeric(this);
+  }
+
+  get document() {
+    return new Document(this);
+  }
+
   get file() {
     return new File(this);
   }
 
   async drop() {
-    const drops = [this.text.drop, this.file.drop];
-    await Promise.all(drops.map(async (drop) => await drop()));
+    const droppables: DatabaseDroppable[] = [this.text, this.numeric, this.document, this.file];
+    await Promise.all(droppables.map(async (droppable) => await droppable.drop()));
     await this.database.orm.attribute.deleteMany({
       where: { id: await this.id() },
     });
   }
 }
 
-export class Text {
+export class Text implements DatabaseDroppable {
   readonly attribute: Attribute;
 
   constructor(attribute: Attribute) {
@@ -332,19 +480,23 @@ export class Text {
     return this.attribute.database;
   }
 
+  get text() {
+    return this.database.orm.text;
+  }
+
   async id() {
     const select = { id: true };
     const where = {
       attribute_id: await this.attribute.id(),
     };
-    const id = await this.database.orm.text
+    const id = await this.text
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return id;
-    return await this.database.orm.text
+    return await this.text
       .create({
         select,
         data: {
@@ -357,7 +509,7 @@ export class Text {
 
   async get() {
     const id = await this.id();
-    return this.database.orm.text
+    return this.text
       .findFirst({
         select: { value: true },
         where: { id },
@@ -366,7 +518,7 @@ export class Text {
   }
 
   async set(value: string) {
-    await this.database.orm.text.update({
+    await this.text.update({
       select: null,
       where: { id: await this.id() },
       data: { value },
@@ -374,13 +526,13 @@ export class Text {
   }
 
   async drop() {
-    await this.database.orm.text.deleteMany({
+    await this.text.deleteMany({
       where: { id: await this.id() },
     });
   }
 }
 
-export class File {
+export class Numeric implements DatabaseDroppable {
   readonly attribute: Attribute;
 
   constructor(attribute: Attribute) {
@@ -391,24 +543,28 @@ export class File {
     return this.attribute.database;
   }
 
+  get numeric() {
+    return this.database.orm.numeric;
+  }
+
   async id() {
     const select = { id: true };
     const where = {
       attribute_id: await this.attribute.id(),
     };
-    const id = await this.database.orm.file
+    const id = await this.numeric
       .findFirst({
         select,
         where,
       })
       .then((found) => found?.id);
     if (!!id) return id;
-    return await this.database.orm.file
+    return await this.numeric
       .create({
         select,
         data: {
           ...where,
-          value: Buffer.from(Uint8Array.from([])),
+          value: 0,
         },
       })
       .then((created) => created.id);
@@ -416,18 +572,16 @@ export class File {
 
   async get() {
     const id = await this.id();
-    return this.database.orm.file
+    return this.numeric
       .findFirst({
         select: { value: true },
         where: { id },
       })
-      .then((found) => {
-        return found?.value ?? Buffer.from(Uint8Array.from([]));
-      });
+      .then((found) => found?.value ?? 0);
   }
 
-  async set(value: Buffer) {
-    await this.database.orm.file.update({
+  async set(value: number) {
+    await this.numeric.update({
       select: null,
       where: { id: await this.id() },
       data: { value },
@@ -435,8 +589,132 @@ export class File {
   }
 
   async drop() {
-    await this.database.orm.file.deleteMany({
+    await this.numeric.deleteMany({
       where: { id: await this.id() },
+    });
+  }
+}
+
+export class Document implements DatabaseDroppable {
+  readonly attribute: Attribute;
+
+  constructor(attribute: Attribute) {
+    this.attribute = attribute;
+  }
+
+  get database() {
+    return this.attribute.database;
+  }
+
+  get document() {
+    return this.database.orm.document;
+  }
+
+  async id() {
+    const select = { id: true };
+    const where = {
+      attribute_id: await this.attribute.id(),
+    };
+    const id = await this.document
+      .findFirst({
+        select,
+        where,
+      })
+      .then((found) => found?.id);
+    if (!!id) return id;
+    return await this.document
+      .create({
+        select,
+        data: {
+          ...where,
+          value: "",
+        },
+      })
+      .then((created) => created.id);
+  }
+
+  async get() {
+    const id = await this.id();
+    return this.document
+      .findFirst({
+        select: { value: true },
+        where: { id },
+      })
+      .then((found) => found?.value ?? "");
+  }
+
+  async set(value: string) {
+    await this.document.update({
+      select: null,
+      where: { id: await this.id() },
+      data: { value },
+    });
+  }
+
+  async drop() {
+    await this.document.deleteMany({
+      where: { id: await this.id() },
+    });
+  }
+}
+
+export class File implements DatabaseDroppable {
+  readonly attribute: Attribute;
+
+  constructor(attribute: Attribute) {
+    this.attribute = attribute;
+  }
+
+  get database() {
+    return this.attribute.database;
+  }
+
+  get file() {
+    return this.database.orm.file;
+  }
+
+  async id() {
+    const select = { id: true };
+    const where = {
+      attribute_id: await this.attribute.id(),
+    };
+    const data = {
+      ...where,
+      value: Buffer.from(Uint8Array.from([])),
+    };
+    const found = await this.file.findFirst({ select, where });
+    const id = found?.id;
+    if (!!id) return id;
+    const created = await this.file.create({ select, data });
+    return created.id;
+  }
+
+  async get() {
+    const id = await this.id();
+    const select = { value: true };
+    const where = { id };
+    return this.file
+      .findFirst({ select, where })
+      .then((found) => {
+        return found?.value;
+      }).then((value) => {
+        return value ?? Buffer.from(Uint8Array.from([]));
+      });
+  }
+
+  async set(value: Buffer) {
+    const id = await this.id();
+    await this.file.update({
+      select: null,
+      where: { id },
+      data: { value },
+    });
+  }
+
+  async drop() {
+    const id = await this.id();
+    await this.file.deleteMany({
+      where: { id },
     });
   }
 }

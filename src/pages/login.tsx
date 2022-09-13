@@ -1,4 +1,3 @@
-import { supabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { withMagicLinkAuth } from "~/components/MagicLink/MagicLinkAuth";
@@ -17,9 +16,11 @@ const LoginPage = withMagicLinkAuth((user) => {
         <p className="h-12 flex flex-row items-end justify-center">
           Successfully logged in
         </p>
-        {/* <pre className="flex flex-col items-center">
+        {
+          /* <pre className="flex flex-col items-center">
           {JSON.stringify(user, null, 2)}
-        </pre> */}
+        </pre> */
+        }
       </div>
     </div>
   );

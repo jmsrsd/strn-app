@@ -23,17 +23,17 @@ export type CreateContextProps = {
 export type CreateContext = (props: CreateContextProps) => Context;
 
 export async function getCreateContext(
-  props: CreateContextProps
+  props: CreateContextProps,
 ): Promise<CreateContext> {
   const auth = await supabase.auth(props);
   const { id, email } = auth.user ?? {};
-  const authenticated = [!!id, !!email].reduce((p, c) => p && c);
+  const authenticated = !!id && !!email;
   const user: StrictUser | undefined = authenticated
     ? {
-        id: id!,
-        email: email!,
-        role: await getUserRole(props),
-      }
+      id: id!,
+      email: email!,
+      role: await getUserRole(props),
+    }
     : undefined;
 
   return ({ req, res }) => {

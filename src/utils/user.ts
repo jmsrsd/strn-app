@@ -1,11 +1,8 @@
-import {
-  User as SupabaseUser,
-  withPageAuth,
-} from "@supabase/auth-helpers-nextjs";
+import { User as SupabaseUser, withPageAuth } from "@supabase/auth-helpers-nextjs";
 import { GetServerSidePropsContext } from "next";
 import * as supabase from "~/utils/supabase";
 import { NextApiHandlerProps } from "./next";
-import { Nullish } from "./nullish";
+import { Nullish } from "./types";
 
 export type Slug = string | string[];
 
@@ -65,7 +62,7 @@ export const strict = {
           email: user.email!,
           role: role,
         },
-        slug
+        slug,
       );
     };
   },
@@ -92,7 +89,7 @@ export const nullish = {
     };
   },
   withUser: (
-    Component: (user: NullishUser, slug?: Slug | Nullish) => JSX.Element
+    Component: (user: NullishUser, slug?: Slug | Nullish) => JSX.Element,
   ) => {
     return ({ user, role, slug }: NullishWithUserProps) => {
       return Component(
@@ -101,7 +98,7 @@ export const nullish = {
           email: user?.email,
           role: role,
         },
-        slug
+        slug,
       );
     };
   },

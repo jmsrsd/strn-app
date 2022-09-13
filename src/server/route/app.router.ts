@@ -6,8 +6,8 @@ import { postKey, postRouter } from "./post.router";
 export const appKey = "strn-blog-app";
 
 export const appRouter = createRouter()
-  .merge(`${dataKey}.`, dataRouter)
-  .merge(`${domainKey}.`, domainRouter)
-  .merge(`${postKey}.`, postRouter);
+  .merge("data.", dataRouter)
+  .merge("domain.", domainRouter)
+  .merge("post.", postRouter);
 
 export type AppRouter = typeof appRouter;

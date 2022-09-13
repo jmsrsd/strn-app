@@ -47,11 +47,10 @@ export default strict.withUser((user) => {
           </button>
         </form>
         <div className="flex flex-col space-y-4 w-full">
-          {titles.isLoading ? (
-            <div>Loading...</div>
-          ) : (
+          {titles.isLoading ? <div>Loading...</div> : (
             Object.keys(titles.data ?? []).map((id, i) => {
-              const title = (titles.data ?? {})[id];
+              const title = "";
+              // const title = (titles.data ?? {})[id];
               return (
                 <div className="flex flex-row space-x-4" key={i}>
                   <div className="grow truncate">{`${title}`}</div>

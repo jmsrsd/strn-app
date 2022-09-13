@@ -6,6 +6,7 @@ import { strict } from "~/utils/user";
 export const getServerSideProps = strict.getServerSideUser;
 
 export default strict.withUser((user, slug) => {
+  const test = trpc.useQuery(["post.author_id", ""]);
   const keys = trpc.useQuery(["domain.keys"]);
   const add = trpc.useMutation(["domain.add"], {
     onSuccess: async (id) => {
@@ -39,34 +40,36 @@ export default strict.withUser((user, slug) => {
             ref={keyInputRef}
             required
           />
-          {isLoading ? (
-            <div className="flex flex-row justify-center">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <button className="bg-black text-white font-bold" type="submit">
-              ADD KEY
-            </button>
-          )}
+          {isLoading
+            ? (
+              <div className="flex flex-row justify-center">
+                <LoadingSpinner />
+              </div>
+            )
+            : (
+              <button className="bg-black text-white font-bold" type="submit">
+                ADD KEY
+              </button>
+            )}
         </form>
         <div className="flex flex-col space-y-2">
           {keys.isLoading
             ? "Loading..."
             : keys.data?.map((key, i) => {
-                return (
-                  <div className="flex flex-row" key={i}>
-                    <div className="flex-auto">{key}</div>
-                    <button
-                      onClick={async () => {
-                        await remove.mutateAsync({ key });
-                      }}
-                      disabled={remove.isLoading}
-                    >
-                      ❌
-                    </button>
-                  </div>
-                );
-              })}
+              return (
+                <div className="flex flex-row" key={i}>
+                  <div className="flex-auto">{key}</div>
+                  <button
+                    onClick={async () => {
+                      await remove.mutateAsync({ key });
+                    }}
+                    disabled={remove.isLoading}
+                  >
+                    ❌
+                  </button>
+                </div>
+              );
+            })}
         </div>
       </div>
     </div>
