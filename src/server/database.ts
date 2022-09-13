@@ -120,94 +120,115 @@ export class Database {
   }
 
   async find(
-    mode: "first" | "many",
-    application: string,
-    domain: string,
-    key: DatabaseSetType,
-    where: {
-      equals?: string | number;
-      in?: string | number | (string | number)[];
-      notIn?: string | number | (string | number)[];
-      lt?: string | number;
-      lte?: string | number;
-      gt?: string | number;
-      gte?: string | number;
-      contains?: string;
-      startsWith?: string;
-      endsWith?: string;
-      not?: number;
+    args: {
+      mode: "first" | "many";
+      application: string;
+      domain: string;
+      type: DatabaseSetType;
+      where: {
+        equals?: string | number;
+        in?: string | number | (string | number)[];
+        notIn?: string | number | (string | number)[];
+        lt?: string | number;
+        lte?: string | number;
+        gt?: string | number;
+        gte?: string | number;
+        contains?: string;
+        startsWith?: string;
+        endsWith?: string;
+        not?: number;
+      };
+      take: number | undefined;
+      skip: number | undefined;
     },
-    take: number | undefined,
-    skip: number | undefined,
   ) {
+    const { mode, application, domain, type, where, take, skip } = args;
     const { equals, in: in_, notIn, lt, lte, gt, gte, contains, startsWith, endsWith, not } = where;
-    const stringWhere = {
-      equals: equals as string | undefined,
-      in: in_ as string | string[] | undefined,
-      notIn: notIn as string | string[] | undefined,
-      lt: lt as string | undefined,
-      lte: lte as string | undefined,
-      gt: gt as string | undefined,
-      gte: gte as string | undefined,
-      contains,
-      startsWith,
-      endsWith,
-    };
-    const stringQuery = {
-      select: { attribute_id: true },
-      where: {
-        value: stringWhere,
-      },
-      take,
-      skip,
-    };
-    const numberQuery = {
-      select: { attribute_id: true },
-      where: {
-        value: {
-          equals: equals as number | undefined,
-          in: in_ as number | number[] | undefined,
-          notIn: notIn as number | number[] | undefined,
-          lt: lt as number | undefined,
-          lte: lte as number | undefined,
-          gt: gt as number | undefined,
-          gte: gte as number | undefined,
-          not,
+    const query = {
+      string: {
+        select: { attribute_id: true },
+        where: {
+          value: {
+            equals: equals as string | undefined,
+            in: in_ as string | string[] | undefined,
+            notIn: notIn as string | string[] | undefined,
+            lt: lt as string | undefined,
+            lte: lte as string | undefined,
+            gt: gt as string | undefined,
+            gte: gte as string | undefined,
+            contains,
+            startsWith,
+            endsWith,
+          },
         },
+        take,
+        skip,
       },
-      take,
-      skip,
+      number: {
+        select: { attribute_id: true },
+        where: {
+          value: {
+            equals: equals as number | undefined,
+            in: in_ as number | number[] | undefined,
+            notIn: notIn as number | number[] | undefined,
+            lt: lt as number | undefined,
+            lte: lte as number | undefined,
+            gt: gt as number | undefined,
+            gte: gte as number | undefined,
+            not,
+          },
+        },
+        take,
+        skip,
+      },
     };
     let attribute_ids: string[] | null | undefined = [];
-    switch (key) {
+    switch (type) {
       case "text": {
         const text = this.orm.text;
         if (mode == "many") {
-          attribute_ids = await text.findMany(stringQuery).then((founds) => founds.map((found) => found.attribute_id));
+          attribute_ids = await text.findMany({
+            ...query.string,
+            orderBy: { id: "desc" },
+          }).then((founds) => founds.map((found) => found.attribute_id));
         } else {
-          attribute_ids.push(`${await text.findFirst(stringQuery).then((found) => found?.attribute_id)}`);
+          const attribute_id = await text.findFirst({
+            ...query.string,
+            orderBy: { id: "desc" },
+          }).then((found) => found?.attribute_id);
+          attribute_ids.push(`${attribute_id}`);
         }
         break;
       }
       case "numeric": {
         const numeric = this.orm.numeric;
         if (mode == "many") {
-          attribute_ids = await numeric.findMany(numberQuery).then((founds) =>
-            founds.map((found) => found.attribute_id)
-          );
+          attribute_ids = await numeric.findMany({
+            ...query.number,
+            orderBy: { id: "desc" },
+          }).then((founds) => founds.map((found) => found.attribute_id));
         } else {
-          attribute_ids.push(`${await numeric.findFirst(numberQuery).then((found) => found?.attribute_id)}`);
+          const attribute_id = await numeric.findFirst({
+            ...query.number,
+            orderBy: { id: "desc" },
+          }).then((found) => found?.attribute_id);
+          attribute_ids.push(`${attribute_id}`);
         }
         break;
       }
       case "document": {
         const document = this.orm.document;
         if (mode == "many") {
-          attribute_ids = await document.findMany(stringQuery).then((founds) =>
-            founds.map((found) => found.attribute_id)
-          );
+          attribute_ids = await document.findMany({
+            ...query.string,
+            orderBy: { id: "desc" },
+          }).then((founds) => founds.map((found) => found.attribute_id));
         } else {
-          attribute_ids.push(`${await document.findFirst(stringQuery).then((found) => found?.attribute_id)}`);
+          const attribute_id = await document.findFirst({
+            ...query.string,
+            orderBy: { id: "desc" },
+          }).then((found) => found?.attribute_id);
+          attribute_ids.push(`${attribute_id}`);
         }
         break;
       }
@@ -215,16 +236,14 @@ export class Database {
 
     if (!attribute_ids) return [] as string[];
 
-    const selected = await Promise.all(attribute_ids.map(async (attribute_id) => {
-      return await this.orm.attribute.findMany({
-        select: { entity_id: true },
-        where: { id: `${attribute_id}` },
-      }).then((founds) => founds.map((found) => found.entity_id));
+    return await Promise.all(attribute_ids.map(async (attribute_id) => {
+      return await Entity.of({ ctx: this.ctx, attribute_id }).then((entity) => {
+        const isDomainMatched = entity.domain.key !== domain;
+        const isApplicationMatched = entity.domain.application.key !== application;
+        if (isDomainMatched && isApplicationMatched) return [];
+        return [entity.id];
+      });
     })).then((selected) => selected.reduce((p, c) => [...p, ...c]));
-
-    return await this.application(application).domain(domain).entities().then((entities) => {
-      return entities.map((entity) => entity.id).filter((id) => selected.includes(id));
-    });
   }
 }
 
@@ -405,6 +424,33 @@ export class Entity implements DatabaseDroppable {
     await this.database.orm.entity.deleteMany({
       where: { id: this.id },
     });
+  }
+
+  async count() {
+    return await this.database.orm.entity.count({
+      where: {
+        domain_id: await this.domain.id(),
+      },
+    });
+  }
+
+  static async of(args: { ctx: Context; attribute_id: string }) {
+    const { ctx, attribute_id } = args;
+    const database = new Database(ctx);
+    const attribute = await database.orm.attribute.findFirst({
+      where: { id: attribute_id },
+    });
+    const entity = await database.orm.entity.findFirst({
+      where: { id: `${attribute?.id}` },
+    });
+    const domain = await database.orm.domain.findFirst({
+      where: { id: `${entity?.id}` },
+    });
+    const application = await database.orm.application.findFirst({
+      select: { key: true },
+      where: { id: `${domain?.id}` },
+    });
+    return new Database(ctx).application(`${application?.key}`).domain(`${domain?.key}`).entity(`${entity?.id}`);
   }
 }
 

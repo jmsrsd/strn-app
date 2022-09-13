@@ -116,13 +116,7 @@ export const databaseRouter = createRouter()
     resolve: withRouteAuth(async ({ ctx, input }) => {
       const { mode, domain, type, where, take, skip } = input;
       return await new Database(ctx).find(
-        mode,
-        appKey,
-        domain,
-        type,
-        where,
-        take,
-        skip,
+        { mode, application: appKey, domain, type, where, take, skip },
       );
     }),
   })
