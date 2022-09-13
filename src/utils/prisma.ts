@@ -18,7 +18,7 @@ export const serialize = (value: any) => {
 
 export type Enumerable<T> = T | Array<T>;
 
-export type NestedStringFilter = {
+export type StringFilter = {
   equals?: string;
   in?: Enumerable<string>;
   notIn?: Enumerable<string>;
@@ -32,7 +32,7 @@ export type NestedStringFilter = {
   not?: NestedStringFilter | string;
 };
 
-export type StringFilter = {
+export type NestedStringFilter = {
   equals?: string;
   in?: Enumerable<string>;
   notIn?: Enumerable<string>;
