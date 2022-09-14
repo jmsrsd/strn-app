@@ -1,97 +1,143 @@
-import { prisma } from "~/utils/prisma";
+import App from "next/app";
+import { FloatFilter, prisma, StringFilter } from "~/utils/prisma";
 
 const test = async () => {
-  await db("test").from("post").id("abc123").text("title").query();
-  await db("test").from("post").id("abc123").numeric("created").query();
-  await db("test").from("post").id("abc123").document("content").query();
-  await db("test").from("post").id("abc123").file("image").query();
+  await db("test").from("post").id("abc123").get("title").text();
+  await db("test").from("post").id("abc123").get("created").numeric();
+  await db("test").from("post").id("abc123").get("content").document();
+  await db("test").from("post").id("abc123").get("image").file();
 
-  await db("test").from("post").id("abc123").text("title").mutate("");
-  await db("test").from("post").id("abc123").numeric("created").mutate(0);
-  await db("test").from("post").id("abc123").document("content").mutate("");
-  await db("test").from("post").id("abc123").file("image").mutate([]);
+  await db("test").from("post").id("abc123").set("title").text("");
+  await db("test").from("post").id("abc123").set("created").numeric(0);
+  await db("test").from("post").id("abc123").set("content").document("");
+  await db("test").from("post").id("abc123").set("image").file([]);
 
-  await db("test").from("post").ids();
-  await db("test").from("post").ids({ skip: 24 });
-  await db("test").from("post").ids({ take: 42 });
-  await db("test").from("post").ids({ order: "asc" });
-  await db("test").from("post").ids({ order: "desc" });
+  await db("test").from("post").query().ids();
+  await db("test").from("post").query({ skip: 24 }).ids();
+  await db("test").from("post").query({ take: 42 }).ids();
+  await db("test").from("post").query({ order: "asc" }).ids();
+  await db("test").from("post").query({ order: "desc" }).ids();
 
-  await db("test").from("post").count();
-  await db("test").from("post").count({ skip: 24 });
-  await db("test").from("post").count({ take: 42 });
-  await db("test").from("post").count({ order: "asc" });
-  await db("test").from("post").count({ order: "desc" });
+  await db("test").from("post").query().count();
+  await db("test").from("post").query({ skip: 24 }).count();
+  await db("test").from("post").query({ take: 42 }).count();
+  await db("test").from("post").query({ order: "asc" }).count();
+  await db("test").from("post").query({ order: "desc" }).count();
+
+  await db("test").from("post").query().find("title").text("Foo");
+  await db("test").from("post").query().find("title").text({ contains: "oo" });
+
+  await db("test").from("post").query().find("created").numeric(123);
+  await db("test").from("post").query().find("created").numeric({ gt: 122 });
+
+  await db("test").from("post").query().find("content").document("Foo");
+  await db("test").from("post").query().find("content").document({ contains: "oo" });
 };
 
 export const db = (application: string) => {
   return {
     from: (domain: string) => {
       return {
-        count: async (args?: { skip?: number; take?: number; order?: "asc" | "desc" }) => {
-          const { skip, take, order } = args ?? {};
-          const a = await Application(application);
-          const d = await Domain(a.id, domain);
-          const domain_id = d.id;
-          const orm = prisma.strn_entity;
-          return await orm.count({
-            select: { id: true },
-            orderBy: { id: order },
-            skip,
-            take,
-            where: { domain_id },
-          });
-        },
-        ids: async (args?: { skip?: number; take?: number; order?: "asc" | "desc" }) => {
-          const { skip, take, order } = args ?? {};
-          const a = await Application(application);
-          const d = await Domain(a.id, domain);
-          const domain_id = d.id;
-          const orm = prisma.strn_entity;
-          return await orm.findMany({
-            select: { id: true },
-            orderBy: { id: order },
-            skip,
-            take,
-            where: { domain_id },
-          }).then((entities) => entities.map((entity) => entity.id));
+        query: (opts?: { skip?: number; take?: number; order?: "asc" | "desc" }) => {
+          const Args = async () => {
+            const { skip, take, order } = opts ?? {};
+            const a = await Application(application);
+            const d = await Domain(a.id, domain);
+            const domain_id = d.id;
+            return {
+              orderBy: { id: order },
+              skip,
+              take,
+              where: { domain_id },
+            };
+          };
+
+          const orm = {
+            entity: prisma.strn_entity,
+            attribute: prisma.strn_attribute,
+            text: prisma.strn_text,
+            numeric: prisma.strn_numeric,
+            document: prisma.strn_document,
+            file: prisma.strn_file,
+          };
+
+          const count = async () => {
+            const args = await Args();
+            return await orm.entity.count({ ...args, select: { id: true } });
+          };
+
+          const ids = async () => {
+            const args = await Args();
+            const entities = await orm.entity.findMany({ ...args, select: { id: true } });
+            return entities.map((entity) => entity.id);
+          };
+
+          const find = (key: string) => {
+            return {
+              text: async (where: StringFilter | string) => {
+                const args = await Args();
+                return await Entities({
+                  domain: { id: args.where.domain_id },
+                  attribute: await orm.text.findMany({
+                    ...args,
+                    select: { attribute_id: true },
+                    where: { value: where },
+                  }).then((values) => {
+                    const ids = values.map((value) => value.attribute_id);
+                    return { key, ids };
+                  }),
+                });
+              },
+              numeric: async (where: FloatFilter | number) => {
+                const args = await Args();
+                return await Entities({
+                  domain: { id: args.where.domain_id },
+                  attribute: await orm.numeric.findMany({
+                    ...args,
+                    select: { attribute_id: true },
+                    where: { value: where },
+                  }).then((values) => {
+                    const ids = values.map((value) => value.attribute_id);
+                    return { key, ids };
+                  }),
+                });
+              },
+              document: async (where: StringFilter | string) => {
+                const args = await Args();
+                return await Entities({
+                  domain: { id: args.where.domain_id },
+                  attribute: await orm.document.findMany({
+                    ...args,
+                    select: { attribute_id: true },
+                    where: { value: where },
+                  }).then((values) => {
+                    const ids = values.map((value) => value.attribute_id);
+                    return { key, ids };
+                  }),
+                });
+              },
+            };
+          };
+          return { find, count, ids };
         },
         id: (id: string) => {
           return {
-            text: (key: string) => {
-              const data = Data({ application, domain, id, key }).text;
+            get: (key: string) => {
+              const data = Data({ application, domain, id, key });
               return {
-                query: async () => await data(),
-                mutate: async (value: string) => {
-                  await data(value);
-                },
+                text: async () => await data.text(),
+                numeric: async () => await data.numeric(),
+                document: async () => await data.document(),
+                file: async () => await data.file(),
               };
             },
-            numeric: (key: string) => {
-              const data = Data({ application, domain, id, key }).numeric;
+            set: (key: string) => {
+              const data = Data({ application, domain, id, key });
               return {
-                query: async () => await data(),
-                mutate: async (value: number) => {
-                  await data(value);
-                },
-              };
-            },
-            document: (key: string) => {
-              const data = Data({ application, domain, id, key }).document;
-              return {
-                query: async () => await data(),
-                mutate: async (value: string) => {
-                  await data(value);
-                },
-              };
-            },
-            file: (key: string) => {
-              const data = Data({ application, domain, id, key }).file;
-              return {
-                query: async () => await data(),
-                mutate: async (value: number[]) => {
-                  await data(value);
-                },
+                text: async (value: string) => await data.text(value),
+                numeric: async (value: number) => await data.numeric(value),
+                document: async (value: string) => await data.document(value),
+                file: async (value: number[]) => await data.file(value),
               };
             },
           };
@@ -117,6 +163,30 @@ export const Entity = async (domain_id: string, id: string) => {
   const orm = prisma.strn_entity;
   const data = { id, domain_id };
   return await orm.findFirst({ where: data }) ?? await orm.create({ data });
+};
+
+export const Entities = async (args: { domain: { id: string }; attribute: { key: string; ids: string[] } }) => {
+  const { domain, attribute } = args;
+
+  const orm = {
+    attribute: prisma.strn_attribute,
+    entity: prisma.strn_entity,
+  };
+
+  const entity_ids = await orm.attribute.findMany({
+    select: { entity_id: true },
+    where: {
+      id: { in: attribute.ids },
+      key: attribute.key,
+    },
+  }).then((result) => result.map((e) => e.entity_id));
+
+  return await orm.entity.findMany({
+    where: {
+      id: { in: entity_ids },
+      domain_id: domain.id,
+    },
+  });
 };
 
 export const Attribute = async (entity_id: string, key: string) => {

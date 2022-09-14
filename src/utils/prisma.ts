@@ -45,3 +45,25 @@ export type NestedStringFilter = {
   endsWith?: string;
   not?: NestedStringFilter | string;
 };
+
+export type FloatFilter = {
+  equals?: number;
+  in?: Enumerable<number>;
+  notIn?: Enumerable<number>;
+  lt?: number;
+  lte?: number;
+  gt?: number;
+  gte?: number;
+  not?: NestedFloatFilter | number;
+};
+
+export type NestedFloatFilter = {
+  equals?: number;
+  in?: Enumerable<number>;
+  notIn?: Enumerable<number>;
+  lt?: number;
+  lte?: number;
+  gt?: number;
+  gte?: number;
+  not?: NestedFloatFilter | number;
+};
