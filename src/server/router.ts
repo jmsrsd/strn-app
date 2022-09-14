@@ -8,7 +8,7 @@ export function createRouter() {
   return router<Context>().transformer(superjson);
 }
 
-export function withRouteAuth<TInput, TOutput>(
+export function withAuthResolver<TInput, TOutput>(
   resolve: ProcedureResolver<TInput, InferLast<TOutput>>,
 ) {
   return async (props: ProcedureResolverProps<TInput>) => {
@@ -20,7 +20,7 @@ export function withRouteAuth<TInput, TOutput>(
   };
 }
 
-export function withoutRouteAuth<TInput, TOutput>(
+export function withoutAuthResolver<TInput, TOutput>(
   resolve: ProcedureResolver<TInput, InferLast<TOutput>>,
 ) {
   return async (props: ProcedureResolverProps<TInput>) => {

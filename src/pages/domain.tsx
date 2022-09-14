@@ -6,7 +6,6 @@ import { strict } from "~/utils/user";
 export const getServerSideProps = strict.getServerSideUser;
 
 export default strict.withUser((user, slug) => {
-  const test = trpc.useQuery(["post.author_id", ""]);
   const keys = trpc.useQuery(["domain.keys"]);
   const add = trpc.useMutation(["domain.add"], {
     onSuccess: async (id) => {

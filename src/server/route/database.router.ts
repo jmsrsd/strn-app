@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { createRouter, withRouteAuth } from "~/server/router";
+import { createRouter, withAuthResolver } from "~/server/router";
 import { Database } from "../database";
-import { appKey } from "./app.router";
+import { appRoute } from "./app.router";
 
 export const DatabaseWhereQuerySchema = z.object({
   where: z.object({
@@ -18,44 +18,44 @@ export const SetTypeSchema = z.literal("text").or(z.literal("numeric")).or(z.lit
 export const databaseRouter = createRouter()
   .query("text", {
     input: DatabaseWhereQuerySchema,
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       return await new Database(ctx).text({
         where: {
           ...input.where,
-          applicationKey: appKey,
+          applicationKey: appRoute,
         },
       });
     }),
   })
   .query("numeric", {
     input: DatabaseWhereQuerySchema,
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       return await new Database(ctx).numeric({
         where: {
           ...input.where,
-          applicationKey: appKey,
+          applicationKey: appRoute,
         },
       });
     }),
   })
   .query("document", {
     input: DatabaseWhereQuerySchema,
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       return await new Database(ctx).document({
         where: {
           ...input.where,
-          applicationKey: appKey,
+          applicationKey: appRoute,
         },
       });
     }),
   })
   .query("download", {
     input: DatabaseWhereQuerySchema,
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       return await new Database(ctx).download({
         where: {
           ...input.where,
-          applicationKey: appKey,
+          applicationKey: appRoute,
         },
       });
     }),
@@ -66,12 +66,12 @@ export const databaseRouter = createRouter()
       value: StringOrNumberSchema,
       query: DatabaseWhereQuerySchema,
     }),
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       const { type, value, query } = input;
       return await new Database(ctx).set(type, value, {
         where: {
           ...query.where,
-          applicationKey: appKey,
+          applicationKey: appRoute,
         },
       });
     }),
@@ -81,13 +81,13 @@ export const databaseRouter = createRouter()
       value: z.array(z.number()),
       query: DatabaseWhereQuerySchema,
     }),
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       const { value, query } = input;
       const buffer = Buffer.from(Uint8Array.from(value));
       return await new Database(ctx).upload(buffer, {
         where: {
           ...query.where,
-          applicationKey: appKey,
+          applicationKey: appRoute,
         },
       });
     }),
@@ -113,10 +113,10 @@ export const databaseRouter = createRouter()
       take: z.number().optional(),
       skip: z.number().optional(),
     }),
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       const { mode, domain, type, where, take, skip } = input;
       return await new Database(ctx).find(
-        { mode, application: appKey, domain, type, where, take, skip },
+        { mode, application: appRoute, domain, type, where, take, skip },
       );
     }),
   })
@@ -124,9 +124,9 @@ export const databaseRouter = createRouter()
     input: z.object({
       domain: z.string(),
     }),
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       const { domain } = input;
-      return await new Database(ctx).application(appKey).domain(domain).entities().then((entities) => {
+      return await new Database(ctx).application(appRoute).domain(domain).entities().then((entities) => {
         return entities.length;
       });
     }),
@@ -137,9 +137,9 @@ export const databaseRouter = createRouter()
       skip: z.number().optional(),
       take: z.number().optional(),
     }),
-    resolve: withRouteAuth(async ({ ctx, input }) => {
+    resolve: withAuthResolver(async ({ ctx, input }) => {
       const { domain, skip, take } = input;
-      const entities = await new Database(ctx).application(appKey).domain(domain).entities().then((entities) => {
+      const entities = await new Database(ctx).application(appRoute).domain(domain).entities().then((entities) => {
         return entities.map((entity) => entity.id);
       });
       const count = entities.length;

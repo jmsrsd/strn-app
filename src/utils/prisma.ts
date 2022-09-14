@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+import { toZod } from "tozod";
+import { z } from "zod";
 
 declare global {
   var prisma: PrismaClient | undefined;

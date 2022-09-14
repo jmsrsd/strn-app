@@ -14,3 +14,5 @@ export type ProcedureResolverProps<TInput> = {
 export type ProcedureResolver<TInput, TOutput> = (
   opts: ProcedureResolverProps<TInput>,
 ) => Promise<TOutput> | TOutput;
+
+export const ToString = <T>(ctor: { new(): T }) => ctor.name;
