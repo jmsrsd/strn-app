@@ -1,4 +1,4 @@
-import { prisma } from "~/utils/prisma";
+import { prisma, StringFilter } from "~/utils/prisma";
 import { db, drop, orm } from "..";
 
 export const Application = async (key: string) => {
@@ -266,20 +266,46 @@ export const Model = <
   TAttributes,
   TOutput,
 >(
-  application: TApplication,
-  domain: {
-    key: TDomain;
-    attributes: (
-      attributes: TAttributes,
-    ) => TOutput;
+  args: {
+    application: TApplication;
+    domain: TDomain;
+    attributes: (attributes: TAttributes) => TOutput;
   },
   attributes: (args: { application: TApplication; domain: TDomain; id: string }) => TAttributes,
 ) => {
-  const model = (application: TApplication, key: TDomain) => {
-    return {
-      id: (id: string) => domain.attributes(attributes({ application, domain: key, id })),
-    };
+  const build = (id: string) => {
+    return args.attributes(
+      attributes({
+        application: args.application,
+        domain: args.domain,
+        id,
+      }),
+    );
   };
 
-  return model(application, domain.key);
+  const collection = db(args.application).from(args.domain);
+
+  return {
+    drop: collection.drop,
+    find: (key: keyof TOutput) => {
+      const query = collection.query().find(String(key));
+      return {
+        string: async (where: string | StringFilter) => {
+          return await Promise.all([
+            query.text(where),
+            query.document(where),
+          ]).then((entities) => entities.reduce((p, c) => [...p, ...c]));
+        },
+        number: query.numeric,
+      };
+    },
+    id: (id: string) => ({
+      meta: {
+        application: args.application,
+        domain: args.domain,
+        id,
+      },
+      ...build(id),
+    }),
+  };
 };

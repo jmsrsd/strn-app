@@ -1,9 +1,10 @@
 import { createRouter, withAuthResolver } from "~/server/router";
-import { Data, db, Model, ModelAttributes } from "~/utils/db";
+import { Model, ModelAttributes } from "~/utils/db";
 import { appRoute } from "./app.router";
 
-export const Post = Model(appRoute, {
-  key: "post",
+export const Post = Model({
+  application: appRoute,
+  domain: "post",
   attributes: ({ text, numeric, document, file }) => ({
     ...text("title"),
     ...text("author"),
@@ -16,6 +17,7 @@ export const Post = Model(appRoute, {
 export const postRouter = createRouter()
   .query("find", {
     resolve: withAuthResolver(async ({ ctx, input }) => {
+      await Post.find("title").string("Hello");
       const post = Post.id("abc123");
       await post.content?.get();
     }),
