@@ -1,9 +1,28 @@
-import { useRef } from "react";
-import { trpc } from "~/utils/trpc";
+import { Model } from "~/utils/model";
 import { strict } from "~/utils/user";
 
 export const getServerSideProps = strict.getServerSideUser;
 
+export default strict.withUser((user) => {
+  const models = {
+    ...Model("posts", ($) => ({
+      ...$("title").text,
+      ...$("content").document,
+    })),
+  };
+  const { posts } = models;
+  const post = posts?.id("abc123");
+  const title = post?.title?.get();
+  const content = post?.content?.get();
+  title?.isLoading;
+  post?.title?.find({
+    contains: "string",
+  });
+
+  return <></>;
+});
+
+/*
 export default strict.withUser((user) => {
   const titles = trpc.useQuery(["post.titles"]);
   const add = trpc.useMutation(["post.add"], {
@@ -71,3 +90,4 @@ export default strict.withUser((user) => {
     </div>
   );
 });
+ */

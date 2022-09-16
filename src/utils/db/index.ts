@@ -63,7 +63,8 @@ export const db = (application: string) => ({
 
       const count = async () => {
         const args = await Args();
-        return await orm.entity.count({ ...args, select: { id: true } });
+        const count = await orm.entity.count({ ...args, select: { id: true } });
+        return count.id;
       };
 
       const ids = async () => {

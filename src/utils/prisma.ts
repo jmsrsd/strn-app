@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { toZod } from "tozod";
 import { z } from "zod";
 
 declare global {
@@ -18,54 +17,51 @@ export const serialize = (value: any) => {
   return parsed;
 };
 
-export type Enumerable<T> = T | Array<T>;
+export const EnumerableSchema = <T>(schema: z.ZodType<T>) => {
+  return z.array(schema).or(schema);
+};
 
-export type StringFilter = {
-  equals?: string;
-  in?: Enumerable<string>;
-  notIn?: Enumerable<string>;
-  lt?: string;
-  lte?: string;
-  gt?: string;
-  gte?: string;
-  contains?: string;
-  startsWith?: string;
-  endsWith?: string;
+export const EnumerableStringSchema = EnumerableSchema(z.string());
+
+export const EnumerableNumberSchema = EnumerableSchema(z.number());
+
+export type Enumerable<T> = T | T[];
+
+export const StringFilterSchema = z.object({
+  equals: z.string().optional(),
+  in: EnumerableStringSchema.optional(),
+  notIn: EnumerableStringSchema.optional(),
+  lt: z.string().optional(),
+  lte: z.string().optional(),
+  gt: z.string().optional(),
+  gte: z.string().optional(),
+  contains: z.string().optional(),
+  startsWith: z.string().optional(),
+  endsWith: z.string().optional(),
+});
+
+export type StringFilter = z.infer<typeof StringFilterSchema> & {
   not?: NestedStringFilter | string;
 };
 
-export type NestedStringFilter = {
-  equals?: string;
-  in?: Enumerable<string>;
-  notIn?: Enumerable<string>;
-  lt?: string;
-  lte?: string;
-  gt?: string;
-  gte?: string;
-  contains?: string;
-  startsWith?: string;
-  endsWith?: string;
+export type NestedStringFilter = z.infer<typeof StringFilterSchema> & {
   not?: NestedStringFilter | string;
 };
 
-export type FloatFilter = {
-  equals?: number;
-  in?: Enumerable<number>;
-  notIn?: Enumerable<number>;
-  lt?: number;
-  lte?: number;
-  gt?: number;
-  gte?: number;
+export const NumberFilterSchema = z.object({
+  equals: z.number().optional(),
+  in: EnumerableNumberSchema.optional(),
+  notIn: EnumerableNumberSchema.optional(),
+  lt: z.number().optional(),
+  lte: z.number().optional(),
+  gt: z.number().optional(),
+  gte: z.number().optional(),
+});
+
+export type FloatFilter = z.infer<typeof NumberFilterSchema> & {
   not?: NestedFloatFilter | number;
 };
 
-export type NestedFloatFilter = {
-  equals?: number;
-  in?: Enumerable<number>;
-  notIn?: Enumerable<number>;
-  lt?: number;
-  lte?: number;
-  gt?: number;
-  gte?: number;
+export type NestedFloatFilter = z.infer<typeof NumberFilterSchema> & {
   not?: NestedFloatFilter | number;
 };

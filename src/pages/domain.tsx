@@ -5,6 +5,9 @@ import { strict } from "~/utils/user";
 
 export const getServerSideProps = strict.getServerSideUser;
 
+export default strict.withUser((user, slug) => <></>);
+
+/*
 export default strict.withUser((user, slug) => {
   const keys = trpc.useQuery(["domain.keys"]);
   const add = trpc.useMutation(["domain.add"], {
@@ -74,3 +77,4 @@ export default strict.withUser((user, slug) => {
     </div>
   );
 });
+*/
