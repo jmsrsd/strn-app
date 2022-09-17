@@ -1,4 +1,4 @@
-import { Application, Attribute, Domain, Entity } from ".";
+import { Application, Attribute, Domain, Entity } from "..";
 
 export const Meta = async (application?: string, domain?: string, id?: string, key?: string) => {
   const app = await Application(`${application}`);

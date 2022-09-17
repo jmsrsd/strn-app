@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createRouter, withAuthResolver } from "~/server/router";
-import { db } from "~/utils/db";
+import { DB } from "~/utils/db";
+import env from "~/utils/env";
 import { ModelFindSchema, ModelQuerySchema } from "~/utils/model";
 import { NumberFilterSchema, StringFilterSchema } from "~/utils/prisma";
 
@@ -9,14 +10,14 @@ export const modelRouter = createRouter()
     input: ModelQuerySchema,
     resolve: withAuthResolver(async ({ ctx, input }) => {
       const { domain, opts } = input;
-      return await db(`${process.env.APPLICATION_KEY}`).from(domain).query(opts).ids();
+      return await DB.app(env("APPLICATION_KEY")).from(domain).query(opts).ids();
     }),
   })
   .query("count", {
     input: ModelQuerySchema,
     resolve: withAuthResolver(async ({ ctx, input }) => {
       const { domain, opts } = input;
-      return await db(`${process.env.APPLICATION_KEY}`).from(domain).query(opts).count();
+      return await DB.app(env("APPLICATION_KEY")).from(domain).query(opts).count();
     }),
   })
   .mutation("drop", {
@@ -26,7 +27,7 @@ export const modelRouter = createRouter()
     }),
     resolve: withAuthResolver(async ({ ctx, input }) => {
       const { domain, id } = input;
-      await db(`${process.env.APPLICATION_KEY}`).from(domain).drop(id);
+      await DB.app(env("APPLICATION_KEY")).from(domain).drop(id);
     }),
   })
   .merge(
@@ -36,7 +37,7 @@ export const modelRouter = createRouter()
         input: ModelFindSchema({ where: z.string().or(StringFilterSchema) }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, key, where } = input;
-          const find = db(`${process.env.APPLICATION_KEY}`).from(domain).query().find(key);
+          const find = DB.app(env("APPLICATION_KEY")).from(domain).query().find(key);
           const entities = await find.text(where);
           return entities.map((entity) => entity.id);
         }),
@@ -45,7 +46,7 @@ export const modelRouter = createRouter()
         input: ModelFindSchema({ where: z.string().or(StringFilterSchema) }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, key, where } = input;
-          const find = db(`${process.env.APPLICATION_KEY}`).from(domain).query().find(key);
+          const find = DB.app(env("APPLICATION_KEY")).from(domain).query().find(key);
           const entities = await find.document(where);
           return entities.map((entity) => entity.id);
         }),
@@ -54,7 +55,7 @@ export const modelRouter = createRouter()
         input: ModelFindSchema({ where: z.number().or(NumberFilterSchema) }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, key, where } = input;
-          const find = db(`${process.env.APPLICATION_KEY}`).from(domain).query().find(key);
+          const find = DB.app(env("APPLICATION_KEY")).from(domain).query().find(key);
           const entities = await find.numeric(where);
           return entities.map((entity) => entity.id);
         }),
@@ -71,7 +72,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          const attribute = await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).get(key).text();
+          const attribute = await DB.app(env("APPLICATION_KEY")).from(domain).id(id).get(key).text();
           return attribute?.value ?? "";
         }),
       })
@@ -84,7 +85,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key, value } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).set(key).text(value);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).set(key).text(value);
         }),
       })
       .mutation("drop", {
@@ -95,7 +96,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).drop(key);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).drop(key);
         }),
       }),
   )
@@ -110,7 +111,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          const attribute = await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).get(key).document();
+          const attribute = await DB.app(env("APPLICATION_KEY")).from(domain).id(id).get(key).document();
           return attribute?.value ?? "";
         }),
       })
@@ -123,7 +124,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key, value } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).set(key).document(value);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).set(key).document(value);
         }),
       })
       .mutation("drop", {
@@ -134,7 +135,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).drop(key);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).drop(key);
         }),
       }),
   )
@@ -149,7 +150,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          const attribute = await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).get(key).numeric();
+          const attribute = await DB.app(env("APPLICATION_KEY")).from(domain).id(id).get(key).numeric();
           return attribute?.value ?? 0;
         }),
       })
@@ -162,7 +163,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key, value } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).set(key).numeric(value);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).set(key).numeric(value);
         }),
       })
       .mutation("drop", {
@@ -173,7 +174,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).drop(key);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).drop(key);
         }),
       }),
   )
@@ -188,7 +189,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          const attribute = await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).get(key).file();
+          const attribute = await DB.app(env("APPLICATION_KEY")).from(domain).id(id).get(key).file();
           return Array.from(new Uint8Array(attribute?.value ?? Buffer.from(Uint8Array.from([]))));
         }),
       })
@@ -201,7 +202,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key, value } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).set(key).file(value);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).set(key).file(value);
         }),
       })
       .mutation("drop", {
@@ -212,7 +213,7 @@ export const modelRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { domain, id, key } = input;
-          await db(`${process.env.APPLICATION_KEY}`).from(domain).id(id).drop(key);
+          await DB.app(env("APPLICATION_KEY")).from(domain).id(id).drop(key);
         }),
       }),
   );

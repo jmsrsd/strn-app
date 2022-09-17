@@ -1,6 +1,5 @@
 import { FloatFilter, StringFilter } from "~/utils/prisma";
-import { db } from "..";
-import { DocumentAttribute, FileAttribute, NumericAttribute, Query, TextAttribute } from ".";
+import { DB, DocumentAttribute, FileAttribute, NumericAttribute, Query, TextAttribute } from "..";
 
 export const ModelAttributes = (args: { application: string; domain: string; id: string }) => {
   return {
@@ -24,7 +23,7 @@ export const Model = <
   },
   attributes: (args: { application: TApplication; domain: TDomain; id: string }) => TAttributes,
 ) => {
-  const collection = db(args.application).from(args.domain);
+  const collection = DB.app(args.application).from(args.domain);
   const query = (opts?: Query) => {
     const { count, ids } = collection.query(opts);
     return { count, ids };

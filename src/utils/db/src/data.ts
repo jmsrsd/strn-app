@@ -1,5 +1,5 @@
 import { prisma } from "~/utils/prisma";
-import { Document, File, Meta, Numeric, Text } from ".";
+import { Document, File, Meta, Numeric, Text } from "..";
 
 export const Data = (args: { application: string; domain: string; id: string; key: string }) => {
   const attribute = {
@@ -15,36 +15,54 @@ export const Data = (args: { application: string; domain: string; id: string; ke
       const orm = prisma.strn_text;
       const attribute_id = await attribute.id();
       const found = await orm.findFirst({ select: { id: true }, where: { attribute_id } });
-      await orm.upsert({
-        select: { id: true },
-        where: { id: found?.id },
-        update: { value },
-        create: { attribute_id, value },
-      });
+      if (!!found?.id) {
+        await orm.update({
+          select: { id: true },
+          where: { id: found.id },
+          data: { value },
+        });
+      } else {
+        await orm.create({
+          select: { id: true },
+          data: { attribute_id, value },
+        });
+      }
     },
     numeric: async (value?: number) => {
       if (!value) return await Numeric(args);
       const orm = prisma.strn_numeric;
       const attribute_id = await attribute.id();
       const found = await orm.findFirst({ select: { id: true }, where: { attribute_id } });
-      await orm.upsert({
-        select: { id: true },
-        where: { id: found?.id },
-        update: { value },
-        create: { attribute_id, value },
-      });
+      if (!!found?.id) {
+        await orm.update({
+          select: { id: true },
+          where: { id: found.id },
+          data: { value },
+        });
+      } else {
+        await orm.create({
+          select: { id: true },
+          data: { attribute_id, value },
+        });
+      }
     },
     document: async (value?: string) => {
       if (!value) return await Document(args);
       const orm = prisma.strn_document;
       const attribute_id = await attribute.id();
       const found = await orm.findFirst({ select: { id: true }, where: { attribute_id } });
-      await orm.upsert({
-        select: { id: true },
-        where: { id: found?.id },
-        update: { value },
-        create: { attribute_id, value },
-      });
+      if (!!found?.id) {
+        await orm.update({
+          select: { id: true },
+          where: { id: found.id },
+          data: { value },
+        });
+      } else {
+        await orm.create({
+          select: { id: true },
+          data: { attribute_id, value },
+        });
+      }
     },
     file: async (value?: number[]) => {
       if (!value) return await File(args);
@@ -52,12 +70,18 @@ export const Data = (args: { application: string; domain: string; id: string; ke
       const attribute_id = await attribute.id();
       const found = await orm.findFirst({ select: { id: true }, where: { attribute_id } });
       const buffer = Buffer.from(Uint8Array.from(value));
-      await orm.upsert({
-        select: { id: true },
-        where: { id: found?.id },
-        update: { value: buffer },
-        create: { attribute_id, value: buffer },
-      });
+      if (!!found?.id) {
+        await orm.update({
+          select: { id: true },
+          where: { id: found.id },
+          data: { value: buffer },
+        });
+      } else {
+        await orm.create({
+          select: { id: true },
+          data: { attribute_id, value: buffer },
+        });
+      }
     },
   };
 };

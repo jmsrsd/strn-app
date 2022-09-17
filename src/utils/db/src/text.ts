@@ -1,6 +1,5 @@
 import { prisma } from "~/utils/prisma";
-import { db } from "..";
-import { Data, Meta } from ".";
+import { Data, DB, Meta } from "..";
 
 const orm = prisma.strn_text;
 
@@ -20,7 +19,7 @@ export const TextAttribute = <TKey extends string>(
     return await Data({ application, domain, id, key }).text(value);
   };
   const attribute = {
-    drop: async () => await db(application).from(domain).id(id).drop(key),
+    drop: async () => await DB.app(application).from(domain).id(id).drop(key),
     get: async () => await data(key, undefined),
     set: async (value: string) => {
       await data(key, value);

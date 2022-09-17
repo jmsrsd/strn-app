@@ -1,5 +1,4 @@
-import { drop } from "..";
-import { Meta } from "./meta";
+import { drop, Meta } from "..";
 
 export const Drop = async (application?: string, domain?: string, id?: string, key?: string) => {
   const meta = await Meta(application, domain, id, key);

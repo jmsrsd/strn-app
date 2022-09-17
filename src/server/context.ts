@@ -1,6 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
-import { db } from "~/utils/db";
+import { DB } from "~/utils/db";
 import { prisma } from "~/utils/prisma";
 import * as supabase from "~/utils/supabase";
 import { getUserRole, StrictUser } from "~/utils/user";
@@ -13,7 +13,7 @@ export type Context = {
     never,
     Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
   >;
-  db: typeof db;
+  db: typeof DB;
   user?: StrictUser;
 };
 
@@ -39,6 +39,6 @@ export async function getCreateContext(
     : undefined;
 
   return ({ req, res }) => {
-    return { req, res, prisma, db, user };
+    return { req, res, prisma, db: DB, user };
   };
 }

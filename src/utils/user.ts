@@ -1,8 +1,9 @@
-import { User as SupabaseUser, withPageAuth } from "@supabase/auth-helpers-nextjs";
-import { GetServerSidePropsContext } from "next";
-import * as supabase from "~/utils/supabase";
-import { NextApiHandlerProps } from "./next";
-import { Nullish } from "./types";
+import { User as SupabaseUser, withPageAuth } from '@supabase/auth-helpers-nextjs';
+import { GetServerSidePropsContext, NextApiRequest, NextApiResponse } from 'next';
+import * as supabase from '~/utils/supabase';
+
+import { NextApiHandlerProps } from './next';
+import { Nullish } from './types';
 
 export type Slug = string | string[];
 
@@ -24,14 +25,11 @@ export const getUserRole = async (props: NextApiHandlerProps) => {
     const id = auth.user?.id;
     const role = () => supabase.service().from("role");
     let selected = await role().select("*").eq("id", id);
-    if ((selected.data?.length ?? 0) < 1) {
-      await role().upsert({
-        id,
-        data: "user",
-      });
+    if (selected.data?.length ?? 0 < 1) {
+      await role().upsert({ id, data: "user" });
       selected = await role().select("*").eq("id", id);
     }
-    return `${(selected.data ?? [])[0].value}`;
+    return `${{ ...selected.data }[0].value}`;
   } catch (e) {
     return "guest";
   }
@@ -42,10 +40,12 @@ export const strict = {
     const pageAuth = withPageAuth({
       redirectTo: "/login",
       getServerSideProps: async ({ req, res }) => {
-        const methods: any = { req, res };
         return {
           props: {
-            role: await getUserRole(methods),
+            role: await getUserRole({
+              req: req as NextApiRequest,
+              res: res as NextApiResponse,
+            }),
             slug: context.params?.slug ?? null,
           },
         };
@@ -56,50 +56,36 @@ export const strict = {
   },
   withUser: (Component: (user: StrictUser, slug?: Slug) => JSX.Element) => {
     return ({ user, role, slug }: StrictWithUserProps) => {
-      return Component(
-        {
-          id: user.id,
-          email: user.email!,
-          role: role,
-        },
-        slug,
-      );
+      const { id, email } = { ...user, email: user.email! };
+      return Component({ id, email, role }, slug);
     };
   },
 };
 
-export type NullishWithUserProps = {
+export type UnstrictWithUserProps = {
   user?: SupabaseUser | Nullish;
   role?: string | Nullish;
   slug?: string | string[] | Nullish;
 };
 
-export type NullishUser = {
+export type UnstrictUser = {
   id?: string | Nullish;
   email?: string | Nullish;
   role?: string | Nullish;
 };
 
-export const nullish = {
+export const unstrict = {
   getServerSideUser: async (context: GetServerSidePropsContext) => {
     const serverSideUser = await strict.getServerSideUser(context);
-    const props: NullishWithUserProps = serverSideUser.props ?? {};
-    return {
-      props,
-    };
+    const props: UnstrictWithUserProps = serverSideUser.props ?? {};
+    return { props };
   },
   withUser: (
-    Component: (user: NullishUser, slug?: Slug | Nullish) => JSX.Element,
+    Component: (user: UnstrictUser, slug?: Slug | Nullish) => JSX.Element
   ) => {
-    return ({ user, role, slug }: NullishWithUserProps) => {
-      return Component(
-        {
-          id: user?.id,
-          email: user?.email,
-          role: role,
-        },
-        slug,
-      );
+    return ({ user, role, slug }: UnstrictWithUserProps) => {
+      const { id, email } = user ?? {};
+      return Component({ id, email, role }, slug);
     };
   },
 };

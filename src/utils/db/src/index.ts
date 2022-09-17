@@ -1,6 +1,7 @@
 export * from "./application";
 export * from "./attribute";
 export * from "./data";
+export * from "./db";
 export * from "./document";
 export * from "./domain";
 export * from "./drop";
