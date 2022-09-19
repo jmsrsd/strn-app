@@ -1,12 +1,10 @@
-const env = (
-  key:
-    | "APPLICATION_KEY"
-    | "DATABASE_URL"
-    | "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-    | "NEXT_PUBLIC_SUPABASE_URL"
-    | "SUPABASE_SERVICE_KEY",
-): string => {
-  return `${process.env[key]}`;
-};
+export type EnvKey =
+  | "APPLICATION_NAME"
+  | "DATABASE_URL"
+  | "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  | "NEXT_PUBLIC_SUPABASE_URL"
+  | "SUPABASE_SERVICE_KEY";
 
-export default env;
+export const env = (key: EnvKey): string => {
+  return process.env[key] ?? "";
+};
