@@ -46,7 +46,7 @@ model strn_text {
 model strn_numeric {
   id           String @id @unique() @default(cuid()) @db.VarChar(63)
   attribute_id String @db.VarChar(63)
-  value        Float @db.Double
+  value        Float  @db.Double
 }
 
 model strn_document {
@@ -59,4 +59,41 @@ model strn_file {
   id           String @id @unique() @default(cuid()) @db.VarChar(63)
   attribute_id String @db.VarChar(63)
   value        Bytes  @db.MediumBlob
+}
+
+model strnapp {
+  id  String @id @unique() @default(cuid())
+  key String
+}
+
+model strncollection {
+  id    String @id @unique() @default(cuid())
+  appid String
+  key   String
+}
+
+model strndocument {
+  id           String @id @unique() @default(cuid())
+  collectionid String
+}
+
+model strntext {
+  id         String @id @unique() @default(cuid())
+  documentid String
+  key        String
+  value      String @db.VarChar(8191)
+}
+
+model strnnumeric {
+  id         String @id @unique() @default(cuid())
+  documentid String
+  key        String
+  value      Float  @db.Double()
+}
+
+model strnfile {
+  id         String @id @unique() @default(cuid())
+  documentid String
+  key        String
+  value      Bytes  @db.Blob()
 }

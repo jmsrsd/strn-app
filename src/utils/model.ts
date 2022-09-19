@@ -42,23 +42,111 @@ const createModelAttributeBuilder = <TDomain extends string>(args: {
   return <TKey extends string>(key: TKey) => {
     const find = {
       text: (where: StringFilter | string) => {
-        return trpc.useQuery(["model.find.text", { domain, key, where }]);
+        const utils = trpc.useContext();
+        const query = trpc.useQuery([
+          "model.find.text",
+          { domain, key, where },
+        ]);
+        return {
+          ...query,
+          invalidate: async () => {
+            return await utils.invalidateQueries([
+              "model.find.text",
+              { domain, key, where },
+            ]);
+          },
+        };
       },
       document: (where: StringFilter | string) => {
-        return trpc.useQuery(["model.find.document", { domain, key, where }]);
+        const utils = trpc.useContext();
+        const query = trpc.useQuery([
+          "model.find.document",
+          { domain, key, where },
+        ]);
+        return {
+          ...query,
+          invalidate: async () => {
+            return await utils.invalidateQueries([
+              "model.find.document",
+              { domain, key, where },
+            ]);
+          },
+        };
       },
       numeric: (where: FloatFilter | number) => {
-        return trpc.useQuery(["model.find.numeric", { domain, key, where }]);
+        const utils = trpc.useContext();
+        const query = trpc.useQuery([
+          "model.find.numeric",
+          { domain, key, where },
+        ]);
+        return {
+          ...query,
+          invalidate: async () => {
+            return await utils.invalidateQueries([
+              "model.find.numeric",
+              { domain, key, where },
+            ]);
+          },
+        };
       },
     };
 
     const get = {
-      text: () => trpc.useQuery(["model.text.get", { domain, id, key }]),
-      document: () => {
-        return trpc.useQuery(["model.document.get", { domain, id, key }]);
+      text: () => {
+        const utils = trpc.useContext();
+        const query = trpc.useQuery(["model.text.get", { domain, id, key }]);
+        return {
+          ...query,
+          invalidate: async () => {
+            return await utils.invalidateQueries([
+              "model.text.get",
+              { domain, id, key },
+            ]);
+          },
+        };
       },
-      numeric: () => trpc.useQuery(["model.numeric.get", { domain, id, key }]),
-      file: () => trpc.useQuery(["model.file.get", { domain, id, key }]),
+      document: () => {
+        const utils = trpc.useContext();
+        const query = trpc.useQuery([
+          "model.document.get",
+          { domain, id, key },
+        ]);
+        return {
+          ...query,
+          invalidate: async () => {
+            return await utils.invalidateQueries([
+              "model.document.get",
+              { domain, id, key },
+            ]);
+          },
+        };
+      },
+      numeric: () => {
+        const utils = trpc.useContext();
+        const query = trpc.useQuery(["model.numeric.get", { domain, id, key }]);
+        return {
+          ...query,
+          invalidate: async () => {
+            return await utils.invalidateQueries([
+              "model.numeric.get",
+              { domain, id, key },
+            ]);
+          },
+        };
+      },
+      file: () => {
+        const utils = trpc.useContext();
+        const query = trpc.useQuery(["model.file.get", { domain, id, key }]);
+        return {
+          ...query,
+          invalidate: async () => {
+            return await utils.invalidateQueries([
+              "model.file.get",
+              { domain, id, key },
+            ]);
+          },
+        };
+      },
     };
 
     const set = {
@@ -178,8 +266,32 @@ export const Model = <TDomain extends string, TAttributes>(
   attributes: ($: ModelAttributeBuilder) => TAttributes
 ) => {
   const model = {
-    browse: (opts?: Query) => trpc.useQuery(["model.browse", { domain, opts }]),
-    count: (opts?: Query) => trpc.useQuery(["model.count", { domain, opts }]),
+    browse: (opts?: Query) => {
+      const utils = trpc.useContext();
+      const query = trpc.useQuery(["model.browse", { domain, opts }]);
+      return {
+        ...query,
+        invalidate: async () => {
+          return await utils.invalidateQueries([
+            "model.browse",
+            { domain, opts },
+          ]);
+        },
+      };
+    },
+    count: (opts?: Query) => {
+      const utils = trpc.useContext();
+      const query = trpc.useQuery(["model.count", { domain, opts }]);
+      return {
+        ...query,
+        invalidate: async () => {
+          return await utils.invalidateQueries([
+            "model.count",
+            { domain, opts },
+          ]);
+        },
+      };
+    },
     drop: () => {
       const drop = trpc.useMutation(["model.drop"]);
       const mutate = (id: string) => drop.mutate({ id, domain });
