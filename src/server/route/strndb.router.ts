@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { env } from '~/utils/env';
 
 import { createRouter, withAuthResolver } from '../router';
 
@@ -8,7 +9,6 @@ export const strndbRouter = createRouter()
     createRouter()
       .query("browse", {
         input: z.object({
-          collection: z.string(),
           document: z.string(),
           skip: z.number(),
           take: z.number(),
@@ -20,14 +20,16 @@ export const strndbRouter = createRouter()
             .optional(),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { collection, document, skip, take, orderBy } = input;
+          const { document, skip, take, orderBy } = input;
           const result = await ctx.prisma.strndb_entity.findMany({
-            where: { collection, document },
+            where: { collection: env("APPLICATION_NAME"), document },
             skip,
             take,
             orderBy,
           });
-          const total = await ctx.prisma.strndb_entity.count();
+          const total = await ctx.prisma.strndb_entity.count({
+            where: { collection: env("APPLICATION_NAME"), document },
+          });
           const next = skip + take;
           return {
             result,
@@ -35,17 +37,18 @@ export const strndbRouter = createRouter()
             taken: result.length,
             orderedBy: orderBy,
             total,
-            next: next > total ? undefined : next,
+            next: next >= total ? undefined : next,
           };
         }),
       })
       .mutation("create", {
         input: z.object({
-          collection: z.string(),
           document: z.string(),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          return await ctx.prisma.strndb_entity.create({ data: input });
+          return await ctx.prisma.strndb_entity.create({
+            data: { ...input, collection: env("APPLICATION_NAME") },
+          });
         }),
       })
       .mutation("delete", {
@@ -73,7 +76,6 @@ export const strndbRouter = createRouter()
     createRouter()
       .query("find", {
         input: z.object({
-          collection: z.string(),
           document: z.string(),
           value: z
             .object({
@@ -90,9 +92,9 @@ export const strndbRouter = createRouter()
             .or(z.string()),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { collection, document, value } = input;
+          const { document, value } = input;
           const entities = await ctx.prisma.strndb_entity.findMany({
-            where: { collection, document },
+            where: { collection: env("APPLICATION_NAME"), document },
           });
           const entityIds = entities.map((entity) => entity.id);
           const texts = await ctx.prisma.strndb_text.findMany({
@@ -142,13 +144,13 @@ export const strndbRouter = createRouter()
 
           if (!!id) {
             await ctx.prisma.strndb_text.update({
-              select: {},
+              select: {id: true},
               where: { id },
               data: { entity, key, value },
             });
           } else {
             await ctx.prisma.strndb_text.create({
-              select: {},
+              select: {id: true},
               data: { entity, key, value },
             });
           }
@@ -160,7 +162,6 @@ export const strndbRouter = createRouter()
     createRouter()
       .query("find", {
         input: z.object({
-          collection: z.string(),
           document: z.string(),
           value: z
             .object({
@@ -174,9 +175,9 @@ export const strndbRouter = createRouter()
             .or(z.number()),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { collection, document, value } = input;
+          const { document, value } = input;
           const entities = await ctx.prisma.strndb_entity.findMany({
-            where: { collection, document },
+            where: { collection: env("APPLICATION_NAME"), document },
           });
           const entityIds = entities.map((entity) => entity.id);
           const numerics = await ctx.prisma.strndb_numeric.findMany({
@@ -228,13 +229,13 @@ export const strndbRouter = createRouter()
 
           if (!!id) {
             await ctx.prisma.strndb_numeric.update({
-              select: {},
+              select: {id: true},
               where: { id },
               data: { entity, key, value },
             });
           } else {
             await ctx.prisma.strndb_numeric.create({
-              select: {},
+              select: {id: true},
               data: { entity, key, value },
             });
           }

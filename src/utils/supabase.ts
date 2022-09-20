@@ -1,12 +1,13 @@
-import { supabaseServerClient } from "@supabase/auth-helpers-nextjs";
-import { createClient } from "@supabase/supabase-js";
-import env from "./env";
-import { NextApiHandlerProps } from "./next";
+import { supabaseServerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
+
+import { env } from './env';
+import { NextApiHandlerProps } from './next';
 
 export const service = () => {
   return createClient(
     env("NEXT_PUBLIC_SUPABASE_URL"),
-    env("SUPABASE_SERVICE_KEY"),
+    env("SUPABASE_SERVICE_KEY")
   );
 };
 

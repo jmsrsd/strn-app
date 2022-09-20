@@ -29,8 +29,10 @@ export const getUserRole = async (props: NextApiHandlerProps) => {
       await role().upsert({ id, data: "user" });
       selected = await role().select("*").eq("id", id);
     }
-    return `${{ ...selected.data }[0].value}`;
+    console.log(selected.data);
+    return { ...selected.data }[0].value ?? "";
   } catch (e) {
+    console.error(e);
     return "guest";
   }
 };
@@ -40,15 +42,13 @@ export const strict = {
     const pageAuth = withPageAuth({
       redirectTo: "/login",
       getServerSideProps: async ({ req, res }) => {
-        return {
-          props: {
-            role: await getUserRole({
-              req: req as NextApiRequest,
-              res: res as NextApiResponse,
-            }),
-            slug: context.params?.slug ?? null,
-          },
-        };
+        const role = await getUserRole({
+          req: req as NextApiRequest,
+          res: res as NextApiResponse,
+        });
+        const slug = context.params?.slug ?? null;
+        const props = { role, slug };
+        return { props };
       },
     });
 
