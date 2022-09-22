@@ -9,41 +9,6 @@ export const strndbRouter = createRouter()
       .query("browse", {
         input: z.object({
           document: z.string(),
-          skip: z.number(),
-          take: z.number(),
-          orderBy: z
-            .object({
-              createdAt: z.literal("asc").or(z.literal("desc")).optional(),
-              updatedAt: z.literal("asc").or(z.literal("desc")).optional(),
-            })
-            .optional(),
-        }),
-        resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { document, skip, take, orderBy } = input;
-          const where = { collection: env("APPLICATION_NAME"), document };
-          const result = await ctx.prisma.strndb_entity.findMany({
-            where,
-            skip,
-            take,
-            orderBy,
-          });
-          const total = await ctx.prisma.strndb_entity.count({
-            where,
-          });
-          const next = skip + take;
-          return {
-            result,
-            skipped: skip < total ? skip : total,
-            taken: result.length,
-            orderedBy: orderBy,
-            total,
-            next: next >= total ? undefined : next,
-          };
-        }),
-      })
-      .query("infiniteBrowse", {
-        input: z.object({
-          document: z.string(),
           cursor: z.number().nullish(),
           take: z.number(),
           orderBy: z
@@ -55,22 +20,23 @@ export const strndbRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { document, cursor, take, orderBy } = input;
+          const skip = cursor ?? 0;
           const where = { collection: env("APPLICATION_NAME"), document };
           const result = await ctx.prisma.strndb_entity.findMany({
             where,
-            skip: cursor ?? 0,
+            skip,
             take,
             orderBy,
           });
           const total = await ctx.prisma.strndb_entity.count({ where });
-          const nextCursor = (cursor ?? 0) + take;
+          const next = skip + take;
           return {
             result,
-            skipped: !!cursor ? (cursor < total ? take : total) : undefined,
+            skipped: skip < total ? take : total,
             taken: result.length,
             orderedBy: orderBy,
             total,
-            nextCursor: nextCursor >= total ? undefined : nextCursor,
+            next: next >= total ? undefined : next,
           };
         }),
       })
