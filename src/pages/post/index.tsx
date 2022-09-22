@@ -150,14 +150,36 @@ export default strict.withUser((user) => {
     },
   });
 
+  const createEntity = async (document: string) => {
+    await create.mutateAsync(
+      { document },
+      {
+        onError: async () => {
+          await createEntity(document);
+        },
+      }
+    );
+  };
+
   const remove = trpc.useMutation("strndb.entity.remove", {
     onMutate: async () => {
-      await utils.cancelQuery(["strndb.entity.browse"]);
+      await refresh();
     },
     onSuccess: async () => {
       await refresh();
     },
   });
+
+  const removeEntity = async (id: string) => {
+    await remove.mutateAsync(
+      { id },
+      {
+        onError: async () => {
+          await removeEntity(id);
+        },
+      }
+    );
+  };
 
   const isLoading =
     browse.isLoading ||
@@ -205,7 +227,7 @@ export default strict.withUser((user) => {
             disabled={isLoading}
             className="rounded-md w-40 px-4 py-2 bg-black text-white font-bold disabled:bg-white disabled:text-black duration-300"
             onClick={async () => {
-              await create.mutateAsync({ document: _document });
+              await createEntity(_document);
             }}
           >
             {isLoading ? "LOADING" : "ADD"}
@@ -226,7 +248,7 @@ export default strict.withUser((user) => {
                       key={entity.id}
                     >
                       <PostTile entity={entity.id} />
-                      <div className="w-full flex flex-col items-start text-gray-400 font-bold text-sm space-y-4 font-mono">
+                      <div className="w-full flex flex-col items-start text-gray-600 font-bold text-sm space-y-4 font-mono">
                         <div className="flex flex-col">
                           <div>ID</div>
                           <div>{`# ${entity.id}`}</div>
@@ -244,7 +266,7 @@ export default strict.withUser((user) => {
                         className="px-4 py-2 rounded-md bg-red-500 font-bold text-white disabled:bg-white disabled:text-red-500 duration-300"
                         disabled={isLoading}
                         onClick={async () => {
-                          await remove.mutateAsync({ id: entity.id });
+                          await removeEntity(entity.id);
                         }}
                       >
                         {isLoading ? "LOADING" : "DELETE"}
