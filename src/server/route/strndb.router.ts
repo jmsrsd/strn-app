@@ -1,7 +1,6 @@
 import { z } from 'zod';
+import { createRouter, withAuthResolver } from '~/server/router';
 import { env } from '~/utils/env';
-
-import { createRouter, withAuthResolver } from '../router';
 
 export const strndbRouter = createRouter()
   .merge(
@@ -21,14 +20,15 @@ export const strndbRouter = createRouter()
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
           const { document, skip, take, orderBy } = input;
+          const where = { collection: env("APPLICATION_NAME"), document };
           const result = await ctx.prisma.strndb_entity.findMany({
-            where: { collection: env("APPLICATION_NAME"), document },
+            where,
             skip,
             take,
             orderBy,
           });
           const total = await ctx.prisma.strndb_entity.count({
-            where: { collection: env("APPLICATION_NAME"), document },
+            where,
           });
           const next = skip + take;
           return {
@@ -38,6 +38,39 @@ export const strndbRouter = createRouter()
             orderedBy: orderBy,
             total,
             next: next >= total ? undefined : next,
+          };
+        }),
+      })
+      .query("infiniteBrowse", {
+        input: z.object({
+          document: z.string(),
+          cursor: z.number().nullish(),
+          take: z.number(),
+          orderBy: z
+            .object({
+              createdAt: z.literal("asc").or(z.literal("desc")).optional(),
+              updatedAt: z.literal("asc").or(z.literal("desc")).optional(),
+            })
+            .optional(),
+        }),
+        resolve: withAuthResolver(async ({ ctx, input }) => {
+          const { document, cursor, take, orderBy } = input;
+          const where = { collection: env("APPLICATION_NAME"), document };
+          const result = await ctx.prisma.strndb_entity.findMany({
+            where,
+            skip: cursor ?? 0,
+            take,
+            orderBy,
+          });
+          const total = await ctx.prisma.strndb_entity.count({ where });
+          const nextCursor = (cursor ?? 0) + take;
+          return {
+            result,
+            skipped: !!cursor ? (cursor < total ? take : total) : undefined,
+            taken: result.length,
+            orderedBy: orderBy,
+            total,
+            nextCursor: nextCursor >= total ? undefined : nextCursor,
           };
         }),
       })
@@ -51,7 +84,7 @@ export const strndbRouter = createRouter()
           });
         }),
       })
-      .mutation("delete", {
+      .mutation("remove", {
         input: z.object({
           id: z.string(),
         }),
@@ -96,29 +129,32 @@ export const strndbRouter = createRouter()
           const entities = await ctx.prisma.strndb_entity.findMany({
             where: { collection: env("APPLICATION_NAME"), document },
           });
-          const entityIds = entities.map((entity) => entity.id);
           const texts = await ctx.prisma.strndb_text.findMany({
             select: { entity: true },
-            where: { entity: { in: entityIds }, value },
+            where: {
+              entity: { in: entities.map((entity) => entity.id) },
+              value,
+            },
           });
-          const textEntityIds = texts.map((text) => text.entity);
-          return entities.filter((entity) => textEntityIds.includes(entity.id));
+          return entities
+            .map((entity) => entity.id)
+            .filter(texts.map((text) => text.entity).includes);
         }),
       })
       .query("get", {
         input: z.object({
           entity: z.string(),
-          key: z.string(),
+          attribute: z.string(),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { entity, key } = input;
+          const { entity, attribute } = input;
           const _entity = await ctx.prisma.strndb_entity.findFirst({
             where: { id: entity },
           });
           if (!_entity) return undefined;
 
           const _text = await ctx.prisma.strndb_text.findFirst({
-            where: { entity, key },
+            where: input,
           });
           return _text ?? undefined;
         }),
@@ -126,11 +162,11 @@ export const strndbRouter = createRouter()
       .mutation("set", {
         input: z.object({
           entity: z.string(),
-          key: z.string(),
+          attribute: z.string(),
           value: z.string(),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { entity, key, value } = input;
+          const { entity, attribute, value } = input;
           const _entity = await ctx.prisma.strndb_entity.findFirst({
             where: { id: entity },
           });
@@ -138,20 +174,20 @@ export const strndbRouter = createRouter()
 
           const _text = await ctx.prisma.strndb_text.findFirst({
             select: { id: true },
-            where: { entity, key },
+            where: { entity, attribute },
           });
           const id = _text?.id;
 
           if (!!id) {
             await ctx.prisma.strndb_text.update({
-              select: {id: true},
+              select: { id: true },
               where: { id },
-              data: { entity, key, value },
+              data: input,
             });
           } else {
             await ctx.prisma.strndb_text.create({
-              select: {id: true},
-              data: { entity, key, value },
+              select: { id: true },
+              data: input,
             });
           }
         }),
@@ -179,31 +215,33 @@ export const strndbRouter = createRouter()
           const entities = await ctx.prisma.strndb_entity.findMany({
             where: { collection: env("APPLICATION_NAME"), document },
           });
-          const entityIds = entities.map((entity) => entity.id);
           const numerics = await ctx.prisma.strndb_numeric.findMany({
             select: { entity: true },
-            where: { entity: { in: entityIds }, value },
+            where: {
+              entity: { in: entities.map((entity) => entity.id) },
+              value,
+            },
           });
-          const numericEntityIds = numerics.map((numeric) => numeric.entity);
-          return entities.filter((entity) =>
-            numericEntityIds.includes(entity.id)
-          );
+          return entities
+            .map((entity) => entity.id)
+            .filter(numerics.map((numeric) => numeric.entity).includes);
         }),
       })
       .query("get", {
         input: z.object({
           entity: z.string(),
-          key: z.string(),
+          attribute: z.string(),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { entity, key } = input;
+          const { entity, attribute } = input;
+
           const _entity = await ctx.prisma.strndb_entity.findFirst({
             where: { id: entity },
           });
           if (!_entity) return undefined;
 
           const _numeric = await ctx.prisma.strndb_numeric.findFirst({
-            where: { entity, key },
+            where: input,
           });
           return _numeric ?? undefined;
         }),
@@ -211,11 +249,12 @@ export const strndbRouter = createRouter()
       .mutation("set", {
         input: z.object({
           entity: z.string(),
-          key: z.string(),
+          attribute: z.string(),
           value: z.number(),
         }),
         resolve: withAuthResolver(async ({ ctx, input }) => {
-          const { entity, key, value } = input;
+          const { entity, attribute } = input;
+
           const _entity = await ctx.prisma.strndb_entity.findFirst({
             where: { id: entity },
           });
@@ -223,20 +262,20 @@ export const strndbRouter = createRouter()
 
           const _numeric = await ctx.prisma.strndb_numeric.findFirst({
             select: { id: true },
-            where: { entity, key },
+            where: { entity, attribute },
           });
           const id = _numeric?.id;
 
           if (!!id) {
             await ctx.prisma.strndb_numeric.update({
-              select: {id: true},
+              select: { id: true },
               where: { id },
-              data: { entity, key, value },
+              data: input,
             });
           } else {
             await ctx.prisma.strndb_numeric.create({
-              select: {id: true},
-              data: { entity, key, value },
+              select: { id: true },
+              data: input,
             });
           }
         }),

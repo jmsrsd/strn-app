@@ -29,10 +29,9 @@ export const getUserRole = async (props: NextApiHandlerProps) => {
       await role().upsert({ id, data: "user" });
       selected = await role().select("*").eq("id", id);
     }
-    console.log(selected.data);
-    return { ...selected.data }[0].value ?? "";
+    const first = { ...selected.data }[0];
+    return first?.value ?? "";
   } catch (e) {
-    console.error(e);
     return "guest";
   }
 };

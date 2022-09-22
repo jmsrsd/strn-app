@@ -15,89 +15,6 @@ model data_ {
   value Json?
 }
 
-model strn_application {
-  id  String @id @unique() @default(cuid()) @db.VarChar(63)
-  key String @db.VarChar(255)
-}
-
-model strn_domain {
-  id             String @id @unique() @default(cuid()) @db.VarChar(63)
-  application_id String @db.VarChar(63)
-  key            String @db.VarChar(255)
-}
-
-model strn_entity {
-  id        String @id @unique() @default(cuid()) @db.VarChar(63)
-  domain_id String @db.VarChar(63)
-}
-
-model strn_attribute {
-  id        String @id @unique() @default(cuid()) @db.VarChar(63)
-  entity_id String @db.VarChar(63)
-  key       String @db.VarChar(255)
-}
-
-model strn_text {
-  id           String @id @unique() @default(cuid()) @db.VarChar(63)
-  attribute_id String @db.VarChar(63)
-  value        String @db.VarChar(511)
-}
-
-model strn_numeric {
-  id           String @id @unique() @default(cuid()) @db.VarChar(63)
-  attribute_id String @db.VarChar(63)
-  value        Float  @db.Double
-}
-
-model strn_document {
-  id           String @id @unique() @default(cuid()) @db.VarChar(63)
-  attribute_id String @db.VarChar(63)
-  value        String @db.VarChar(4095)
-}
-
-model strn_file {
-  id           String @id @unique() @default(cuid()) @db.VarChar(63)
-  attribute_id String @db.VarChar(63)
-  value        Bytes  @db.MediumBlob
-}
-
-model strnapp {
-  id  String @id @unique() @default(cuid())
-  key String
-}
-
-model strncollection {
-  id    String @id @unique() @default(cuid())
-  appid String
-  key   String
-}
-
-model strndocument {
-  id           String @id @unique() @default(cuid())
-  collectionid String
-}
-
-model strntext {
-  id         String @id @unique() @default(cuid())
-  documentid String
-  key        String
-  value      String @db.VarChar(8191)
-}
-
-model strnnumeric {
-  id         String @id @unique() @default(cuid())
-  documentid String
-  key        String
-  value      Float  @db.Double()
-}
-
-model strnfile {
-  id         String @id @unique() @default(cuid())
-  documentid String
-  key        String
-  value      Bytes  @db.Blob()
-}
-
 model strndb_entity {
   id         String   @id @unique() @default(cuid())
   collection String
@@ -109,7 +26,7 @@ model strndb_entity {
 model strndb_text {
   id        String   @id @unique() @default(cuid())
   entity    String
-  key       String
+  attribute String
   value     String   @db.VarChar(8191)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -118,7 +35,7 @@ model strndb_text {
 model strndb_numeric {
   id        String   @id @unique() @default(cuid())
   entity    String
-  key       String
+  attribute String
   value     Float    @db.Double()
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
