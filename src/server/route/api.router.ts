@@ -1,8 +1,16 @@
 import { z } from 'zod';
-import { createRouter, withAuthResolver } from '~/server/router';
+import { createRouter, withAuthResolver, withoutAuthResolver } from '~/server/router';
 import { env } from '~/utils/env';
 
-export const strndbRouter = createRouter()
+export const apiRouter = createRouter()
+  .merge(
+    "me.",
+    createRouter().query("role", {
+      resolve: withoutAuthResolver(async ({ ctx }) => {
+        return ctx.user?.role;
+      }),
+    })
+  )
   .merge(
     "entity.",
     createRouter()
@@ -120,7 +128,7 @@ export const strndbRouter = createRouter()
           if (!_entity) return undefined;
 
           const _text = await ctx.prisma.strndb_text.findFirst({
-            where: input,
+            where: { entity, attribute },
           });
           return _text ?? undefined;
         }),

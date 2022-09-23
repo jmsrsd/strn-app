@@ -9,19 +9,19 @@ export function createRouter() {
 }
 
 export function withAuthResolver<TInput, TOutput>(
-  resolve: ProcedureResolver<TInput, InferLast<TOutput>>,
+  resolve: ProcedureResolver<TInput, InferLast<TOutput>>
 ) {
   return async (props: ProcedureResolverProps<TInput>) => {
     if (!!(props.ctx as Context).user) return await resolve(props);
     throw new trpc.TRPCError({
       code: "FORBIDDEN",
-      message: "Can not add a json while logged out",
+      message: "Can not proceed while logged out",
     });
   };
 }
 
 export function withoutAuthResolver<TInput, TOutput>(
-  resolve: ProcedureResolver<TInput, InferLast<TOutput>>,
+  resolve: ProcedureResolver<TInput, InferLast<TOutput>>
 ) {
   return async (props: ProcedureResolverProps<TInput>) => {
     return await resolve(props);

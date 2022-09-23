@@ -1,9 +1,6 @@
 import { createRouter } from '../router';
-import { dataRouter } from './data.router';
-import { strndbRouter } from './strndb.router';
+import { apiRouter } from './api.router';
 
-export const appRouter = createRouter()
-  .merge("data.", dataRouter)
-  .merge("strndb.", strndbRouter);
+export const appRouter = createRouter().merge("api.", apiRouter);
 
 export type AppRouter = typeof appRouter;

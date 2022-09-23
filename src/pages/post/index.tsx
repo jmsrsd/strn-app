@@ -8,15 +8,15 @@ import { strict } from '~/utils/user';
 const useText = (args: { entity: string; attribute: string }) => {
   const utils = trpc.useContext();
 
-  const query = trpc.useQuery(["strndb.text.get", args]);
+  const query = trpc.useQuery(["api.text.get", args]);
 
   const refresh = async () => {
-    await utils.cancelQuery(["strndb.text.get"]);
-    await utils.invalidateQueries(["strndb.text.get"]);
+    await utils.cancelQuery(["api.text.get"]);
+    await utils.invalidateQueries(["api.text.get"]);
     await query.refetch();
   };
 
-  const mutation = trpc.useMutation(["strndb.text.set"], {
+  const mutation = trpc.useMutation(["api.text.set"], {
     onMutate: async () => {
       await refresh();
     },
@@ -119,19 +119,19 @@ export default strict.withUser((user) => {
 
   const browse = trpc.useInfiniteQuery(
     [
-      "strndb.entity.browse",
+      "api.entity.browse",
       { document: _document, take: 10, orderBy: { createdAt: "desc" } },
     ],
     { getNextPageParam: (last) => last.next }
   );
 
   const refresh = useCallback(async () => {
-    await utils.cancelQuery(["strndb.entity.browse"]);
-    await utils.invalidateQueries(["strndb.entity.browse"]);
+    await utils.cancelQuery(["api.entity.browse"]);
+    await utils.invalidateQueries(["api.entity.browse"]);
     await browse.refetch();
   }, [browse, utils]);
 
-  const _create = trpc.useMutation("strndb.entity.create", {
+  const _create = trpc.useMutation("api.entity.create", {
     onMutate: async () => {
       await refresh();
     },
@@ -151,7 +151,7 @@ export default strict.withUser((user) => {
     );
   };
 
-  const _remove = trpc.useMutation("strndb.entity.remove", {
+  const _remove = trpc.useMutation("api.entity.remove", {
     onMutate: async () => {
       await refresh();
     },
@@ -171,12 +171,13 @@ export default strict.withUser((user) => {
     );
   };
 
-  const isLoading =
-    browse.isLoading ||
-    browse.isFetching ||
-    browse.isRefetching ||
-    _create.isLoading ||
-    _remove.isLoading;
+  const isLoading = [
+    browse.isLoading,
+    browse.isFetching,
+    browse.isRefetching,
+    _create.isLoading,
+    _remove.isLoading,
+  ].reduce((p, c) => p || c);
 
   const { ref: bottomInViewRef, inView: bottomInView } = useInView();
 

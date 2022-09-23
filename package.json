@@ -4,7 +4,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prisma": "npx prisma generate && npx prisma db push"
   },
   "dependencies": {
     "@material/react-linear-progress": "^0.15.0",

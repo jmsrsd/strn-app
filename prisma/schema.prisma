@@ -9,12 +9,6 @@ datasource db {
   referentialIntegrity = "prisma"
 }
 
-model data_ {
-  id    String  @id @default(cuid())
-  type  String?
-  value Json?
-}
-
 model strndb_entity {
   id         String   @id @unique() @default(cuid())
   collection String
