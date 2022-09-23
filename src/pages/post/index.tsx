@@ -1,5 +1,5 @@
 import LinearProgress from '@material/react-linear-progress';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import LoadingSpinner from '~/components/LoadingSpinner';
 import { trpc } from '~/utils/trpc';
@@ -41,8 +41,6 @@ const TextField = (props: {
 }) => {
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { ref: inViewRef, inView } = useInView();
-
   const text = useText(props);
 
   const [timer, setTimer] = useState<any>(undefined);
@@ -80,16 +78,8 @@ const TextField = (props: {
     }
   }, [value]);
 
-  useEffect(() => {
-    if (inView) {
-      text.query.refetch().then(() => {
-        _setValue(undefined);
-      });
-    }
-  }, [inView]);
-
   return (
-    <div className="w-full flex flex-col space-y-2" ref={inViewRef}>
+    <div className="w-full flex flex-col space-y-2">
       <div className="font-semibold text-sm">{props.label}</div>
       <div className="w-full flex flex-col">
         <textarea
@@ -135,13 +125,13 @@ export default strict.withUser((user) => {
     { getNextPageParam: (last) => last.next }
   );
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     await utils.cancelQuery(["strndb.entity.browse"]);
     await utils.invalidateQueries(["strndb.entity.browse"]);
     await browse.refetch();
-  };
+  }, [browse, utils]);
 
-  const create = trpc.useMutation("strndb.entity.create", {
+  const _create = trpc.useMutation("strndb.entity.create", {
     onMutate: async () => {
       await refresh();
     },
@@ -150,18 +140,18 @@ export default strict.withUser((user) => {
     },
   });
 
-  const createEntity = async (document: string) => {
-    await create.mutateAsync(
-      { document },
+  const create = async () => {
+    await _create.mutateAsync(
+      { document: _document },
       {
         onError: async () => {
-          await createEntity(document);
+          await create();
         },
       }
     );
   };
 
-  const remove = trpc.useMutation("strndb.entity.remove", {
+  const _remove = trpc.useMutation("strndb.entity.remove", {
     onMutate: async () => {
       await refresh();
     },
@@ -170,12 +160,12 @@ export default strict.withUser((user) => {
     },
   });
 
-  const removeEntity = async (id: string) => {
-    await remove.mutateAsync(
+  const remove = async (id: string) => {
+    await _remove.mutateAsync(
       { id },
       {
         onError: async () => {
-          await removeEntity(id);
+          await remove(id);
         },
       }
     );
@@ -185,23 +175,16 @@ export default strict.withUser((user) => {
     browse.isLoading ||
     browse.isFetching ||
     browse.isRefetching ||
-    create.isLoading ||
-    remove.isLoading;
+    _create.isLoading ||
+    _remove.isLoading;
 
   const { ref: bottomInViewRef, inView: bottomInView } = useInView();
-  const { ref: topInViewRef, inView: topInView } = useInView();
 
   useEffect(() => {
-    if (bottomInView) {
-      browse.fetchNextPage().then(async () => {
-        await refresh();
-      });
+    if (bottomInView && browse.hasNextPage) {
+      browse.fetchNextPage();
     }
-
-    if (topInView) {
-      refresh();
-    }
-  }, [bottomInView, topInView]);
+  }, [bottomInView, browse]);
 
   useEffect(() => {
     document.body.style.overflow = isLoading ? "hidden" : "unset";
@@ -210,27 +193,35 @@ export default strict.withUser((user) => {
   return (
     <div className="bg-blue-50 py-20 w-full min-h-screen flex flex-col items-center">
       <div className="w-80 flesx flex-col space-y-16 items-center">
-        {(!!browse.error || !!create.error || !!remove.error) && (
+        {(!!browse.error || !!_create.error || !!_remove.error) && (
           <div className="p-4 rounded-md flex flex-col items-center text-center bg-yellow-500 text-black font-bold space-y-4">
             {[
               browse.error?.message,
-              create.error?.message,
-              remove.error?.message,
+              _create.error?.message,
+              _remove.error?.message,
             ].map((message, i) => {
               return <div key={i}>{message}</div>;
             })}
           </div>
         )}
-        <div className="flex flex-row items-center justify-center space-x-4">
+        <div className="flex flex-row items-center">
           <button
-            ref={topInViewRef}
             disabled={isLoading}
             className="rounded-md w-40 px-4 py-2 bg-black text-white font-bold disabled:bg-white disabled:text-black duration-300"
             onClick={async () => {
-              await createEntity(_document);
+              await create();
             }}
           >
             {isLoading ? "LOADING" : "ADD"}
+          </button>
+          <div className="grow" />
+          <button
+            disabled={isLoading}
+            onClick={async () => {
+              await refresh();
+            }}
+          >
+            🔄
           </button>
         </div>
         <div className="w-full flex flex-col space-y-4">
@@ -266,7 +257,7 @@ export default strict.withUser((user) => {
                         className="px-4 py-2 rounded-md bg-red-500 font-bold text-white disabled:bg-white disabled:text-red-500 duration-300"
                         disabled={isLoading}
                         onClick={async () => {
-                          await removeEntity(entity.id);
+                          await remove(entity.id);
                         }}
                       >
                         {isLoading ? "LOADING" : "DELETE"}
